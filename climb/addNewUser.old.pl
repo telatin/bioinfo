@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
 use strict;
-our $prefix = 'bsb';
-our $passwd = 'Quadram';
+our $prefix = 'climb.user';
+our $passwd = 'PasswordForStudentx';
 
 my $testsudo = 'ls /root';
 `$testsudo 2>/dev/null`;
