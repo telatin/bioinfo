@@ -85,7 +85,7 @@ if ($warnings[0]) {
 # 1. FDISK
 if ($volume_partitions{$opt_volume}) {
     say STDERR "Skipping partition creation: $opt_volume partition found";
-
+} else {
     if (!$opt_format) {
       say STDERR "Do you want FORMAT the volume $opt_volume (data will be lost!) [y/N]";
       my $answer = <STDIN>;
@@ -93,14 +93,19 @@ if ($volume_partitions{$opt_volume}) {
  
       if ($answer ne 'y') {
       	say STDERR "Answer was not 'y': exiting";
-	exit 1;
+
       
+      } else {
+	      push(@commands, qq(echo " = Creating partition with FDISK"));
+	      fdisk($opt_volume);
       }
-      push(@commands, qq(echo " = Creating partition with FDISK"));
-      fdisk($opt_volume);
+  } else {
+	push(@commands, qq(echo " = Creating partition with FDISK"));
+        fdisk($opt_volume);
+
   }
 
-}
+} 
 
 my $opt_volume1 = $opt_volume.'1';
 
@@ -136,7 +141,7 @@ sub check_volumes {
 	foreach my $line (@lines) {
 		chomp($line);
 		my ($what, $where) = split / on /, $line;
-		if ($what =~m|/dev/(vd*)|) {
+		if ($what =~m|/dev/([sv]d*)|) {
 		    	$mounted_volumes{$what}++;
 			print STDERR GREEN "#MOUNTED: ", RESET,
 			"$what -> $where\n" if ($opt_debug);
@@ -147,7 +152,7 @@ sub check_volumes {
 		}
 	}
 
-	my $list_command = 'ls /dev/vd*';
+	my $list_command = 'ls /dev/[s-v]d*';
 	
 	my @volumes_ls = `$list_command`;
 	foreach my $line (@volumes_ls) {
@@ -175,7 +180,9 @@ sub check_volumes {
 
 
 sub fdisk {
+    
     my $disk = $_[0];
+    say STDERR YELLOW "# Called fdisk: $disk";
     my $format_command = "(  
     echo n
     echo p
