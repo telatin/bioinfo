@@ -11,37 +11,49 @@ use JSON;
 local $Term::ANSIColor::AUTORESET = 1;
 
 our %program = (
+	'NAME'      => 'FASTx N50 CALCULATOR',
 	'AUTHOR' 	=> 'Andrea Telatin',
 	'MAIL'      => 'andrea.telatin@quadram.ac.uk',
 	'VERSION'   => '1.1',
 );
 my $opt_separator = "\t";
-my @formats = ('line', 'json', 'full', 'short');
-my ($opt_help, $opt_version, $opt_input, $opt_verbose, $opt_debug, $opt_nocolor, $opt_format);
+my $opt_format = 'default';
+my %formats = (
+	'default' => '',
+	'csv'     => '',
+	'full'    => 'No',
+    'json'    => '',
+    'short'   => 'Not Implemented'
+ );
+
+my ($opt_help, $opt_version, $opt_input, $opt_verbose, $opt_debug, $opt_nocolor, $opt_nonewline);
 my $result = GetOptions(
-    'i|input=s' => \$opt_input,
-    'h|help'    => \$opt_help,
-    'v|version' => \$opt_version,
-    'd|debug'   => \$opt_debug,
+    'i|input=s'     => \$opt_input,
+    'h|help'        => \$opt_help,
+    'v|version'     => \$opt_version,
+    'd|debug'       => \$opt_debug,
     's|separator=s' => \$opt_separator,
     'f|format=s'    => \$opt_format,
-    'nocolor'   => \$opt_nocolor,
+    'n|nonewline'   => \$opt_nonewline,
 );
 
 pod2usage({-exitval => 0, -verbose => 2}) if $opt_help;
+version() if defined $opt_version;
 
-our @file_stats;
+our %output_object;
 
 foreach my $file (@ARGV) {
 	
 	if (!-e "$file") {
-		# File not found	
+		die " FATAL ERROR:\n File not found ($file).\n";	
 	} else {
-		open I, '<', "$file" || die " FATAL ERROR:\n Unable to read file <$file>.\n";
+		open I, '<', "$file" || die " FATAL ERROR:\n Unable to open file for reading ($file).\n";
 	}
+
 	my @aux;
 	my %sizes;
 	my ($n, $slen) = (0, 0);
+
 	while (my ($name, $seq) = readfq(\*I, \@aux)) {
 	    ++$n;
 
@@ -50,39 +62,41 @@ foreach my $file (@ARGV) {
 	    $sizes{$size}++;
 	}
 	my $n50 = n50fromHash(\%sizes, $slen);
+
 	say STDERR "[$file]\tTotalSize:$slen;N50:$n50;Sequences:$n" if ($opt_debug);
 	
-	my %file_object = (
-		'path' => $file,
+	my %metrics = (
 		'seqs' => $n,
 		'N50'  => $n50,
 		'size' => $slen,
 	);
-	push(@file_stats, \%file_object);
+	$output_object{$file} = \%metrics;
 }
 
-my $file_num = scalar @file_stats;
+my $file_num = scalar keys %output_object;
 
 if (!$opt_format) {
 # DEFAULT
 	if ($file_num == 1) {
-		say ${$file_stats[0]}{'N50'};
+		my @keys = keys %output_object;
+		say $output_object{$keys[0]}{'N50'};
 	} else {
-		foreach my $r (@file_stats) {
-			say ${$r}{'path'}, $opt_separator ,${$r}{'N50'};
+		foreach my $r (keys %output_object) {
+			say $output_object{$r}{'path'}, $opt_separator ,$output_object{$r}{'N50'};
 		}		
 	}
 } elsif ($opt_format eq 'json') {
 	#my $json = encode_json \@file_stats;
 	my $json = JSON->new->allow_nonref;
-	my $pretty_printed = $json->pretty->encode( \@file_stats );
+	my $pretty_printed = $json->pretty->encode( \%output_object );
 	say $pretty_printed;
-} elsif ($opt_format eq 'csv') {
+} elsif ($opt_format eq 'tsv') {
 	my @fields = ('path', 'seqs', 'size', 'N50');
-	say join($opt_separator, @fields);
-	foreach my $r (@file_stats) {
+	say '#', join($opt_separator, @fields);
+
+	foreach my $r (keys %output_object) {
 		for (my $i = 0; $i <= $#fields; $i++) {
-			print ${$r}{$fields[$i]};
+			print $output_object{$r}{$fields[$i]};
 			if ($i == $#fields) {
 				print "\n";
 			} else {
@@ -116,6 +130,17 @@ sub n50fromHash {
 		return $s if ($tlen >= ($total/2));
 	}
 
+}
+
+sub version {
+	say STDERR<<END;
+	$program{NAME}, ver. $program{VERSION}
+	$program{AUTHOR}
+
+	Program to calculate N50 from multiple FASTA/FASTQ files.
+	Type --help (or -h) to see the full documentation.
+END
+exit 0;
 }
 sub readfq {
     my ($fh, $aux) = @_;
