@@ -19,22 +19,22 @@ our %program = (
 my $opt_separator = "\t";
 my $opt_format = 'default';
 my %formats = (
-	'default' => '',
-	'csv'     => '',
-	'full'    => 'No',
-    'json'    => '',
+	'default' => 'Prints only N50 for single file, TSV for multiple files',
+	'tsv'     => 'Tab separated output (file, seqs, total size, N50)',
+	'full'    => 'Not implemented',
+    'json'    => 'JSON (JavaScript Object Notation) output',
     'short'   => 'Not Implemented'
  );
 
-my ($opt_help, $opt_version, $opt_input, $opt_verbose, $opt_debug, $opt_nocolor, $opt_nonewline);
+my ($opt_help, $opt_version, $opt_input, $opt_verbose, $opt_debug, $opt_nocolor, $opt_nonewline, $opt_pretty);
 my $result = GetOptions(
-    'i|input=s'     => \$opt_input,
+    'f|format=s'    => \$opt_format,
+    's|separator=s' => \$opt_separator,
+    'p|pretty'      => \$opt_pretty,
+    'n|nonewline'   => \$opt_nonewline,
     'h|help'        => \$opt_help,
     'v|version'     => \$opt_version,
     'd|debug'       => \$opt_debug,
-    's|separator=s' => \$opt_separator,
-    'f|format=s'    => \$opt_format,
-    'n|nonewline'   => \$opt_nonewline,
 );
 
 pod2usage({-exitval => 0, -verbose => 2}) if $opt_help;
@@ -42,19 +42,33 @@ version() if defined $opt_version;
 
 our %output_object;
 
+if (defined $opt_format) {
+	$opt_format = lc($opt_format);
+	if (!$formats{$opt_format}) {
+		my @list = sort keys(%formats);
+
+		die " FATAL ERROR:\n Output format not valid (--format '$opt_format').\n Use one of the following: " .
+			join(', ',@list) . ".\n";
+	}
+
+}
 foreach my $file (@ARGV) {
 	
-	if (!-e "$file") {
+	if (!-e "$file" and $file ne '-') {
 		die " FATAL ERROR:\n File not found ($file).\n";	
+	} elsif ($file eq '-') {
+		$file = '<STDIN>';
 	} else {
-		open I, '<', "$file" || die " FATAL ERROR:\n Unable to open file for reading ($file).\n";
+		open STDIN, '<', "$file" || die " FATAL ERROR:\n Unable to open file for reading ($file).\n";
 	}
+
+
 
 	my @aux;
 	my %sizes;
 	my ($n, $slen) = (0, 0);
 
-	while (my ($name, $seq) = readfq(\*I, \@aux)) {
+	while (my ($name, $seq) = readfq(\*STDIN, \@aux)) {
 	    ++$n;
 
 	    my $size = length($seq);
@@ -204,13 +218,36 @@ Andrea Telatin <andrea.telatin@quadram.ac.uk>
  
 n50.pl [options] [FILE1 FILE2 FILE3...]
 
+=head1 PARAMETERS
+
+=over 12
+
+=item U<-f, --format>
+
+Output format: default, tsv, json. See below for details
+
+=item U<-s, --separator>
+
+Separator to be used in 'tsv' output. Default: tab.
+
+=item U<-n, --nonewline>
+
+If used with 'default' output format, will NOT print the
+newline character after the N50. Usually used in bash scripting.
+
+=item U<-p, --pretty>
+
+If used with 'json' output format, will format the JSON
+in pretty print mode.
+
+=back
 
 =head1 DESCRIPTION
  
-After running jellyfish with a particular KMERLEN and one or more FASTQ files,
-determine the PEAK using jellyplot.pl and find_valleys.pl. Next, use this
-PEAK as well as the KMERLEN and the FASTQ files used in the jellyfish run
-as input. The script will determine the coverage and genome size.
+This program parses a list of FASTA/FASTQ files calculating for each one
+the number of sequences, the sum of sequences lengths and the N50.
+It will print the result in different formats, by default only the N50 is
+printed for a single file and all metrics in TSV format for multiple files.
  
 =head1 OPTIONS
 
