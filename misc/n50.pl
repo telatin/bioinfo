@@ -11,19 +11,19 @@ use JSON;
 local $Term::ANSIColor::AUTORESET = 1;
 
 our %program = (
-	'NAME'      => 'FASTx N50 CALCULATOR',
-	'AUTHOR' 	=> 'Andrea Telatin',
-	'MAIL'      => 'andrea.telatin@quadram.ac.uk',
-	'VERSION'   => '1.1',
+  'NAME'      => 'FASTx N50 CALCULATOR',
+  'AUTHOR'    => 'Andrea Telatin',
+  'MAIL'      => 'andrea.telatin@quadram.ac.uk',
+  'VERSION'   => '1.1',
 );
 my $opt_separator = "\t";
 my $opt_format = 'default';
 my %formats = (
-	'default' => 'Prints only N50 for single file, TSV for multiple files',
-	'tsv'     => 'Tab separated output (file, seqs, total size, N50)',
-	'full'    => 'Not implemented',
-    'json'    => 'JSON (JavaScript Object Notation) output',
-    'short'   => 'Not Implemented'
+  'default' => 'Prints only N50 for single file, TSV for multiple files',
+  'tsv'     => 'Tab separated output (file, seqs, total size, N50)',
+  'full'    => 'Not implemented',
+  'json'    => 'JSON (JavaScript Object Notation) output',
+  'short'   => 'Not Implemented'
  );
 
 my ($opt_help, $opt_version, $opt_input, $opt_verbose, $opt_debug, $opt_nocolor, $opt_nonewline, $opt_pretty);
