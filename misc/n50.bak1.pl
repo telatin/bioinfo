@@ -11,39 +11,35 @@ use JSON;
 local $Term::ANSIColor::AUTORESET = 1;
 
 our %program = (
-  'NAME'      => 'FASTx N50 CALCULATOR',
-  'AUTHOR'    => 'Andrea Telatin',
-  'MAIL'      => 'andrea.telatin@quadram.ac.uk',
-  'VERSION'   => '1.1',
+	'NAME'      => 'FASTx N50 CALCULATOR',
+	'AUTHOR' 	=> 'Andrea Telatin',
+	'MAIL'      => 'andrea.telatin@quadram.ac.uk',
+	'VERSION'   => '1.1',
 );
 my $opt_separator = "\t";
 my $opt_format = 'default';
 my %formats = (
-  'default' => 'Prints only N50 for single file, TSV for multiple files',
-  'tsv'     => 'Tab separated output (file, seqs, total size, N50)',
-  'full'    => 'Not implemented',
-  'json'    => 'JSON (JavaScript Object Notation) output',
-  'short'   => 'Not Implemented'
+	'default' => 'Prints only N50 for single file, TSV for multiple files',
+	'tsv'     => 'Tab separated output (file, seqs, total size, N50)',
+	'full'    => 'Not implemented',
+    'json'    => 'JSON (JavaScript Object Notation) output',
+    'short'   => 'Not Implemented'
  );
 
-my ($opt_help, 
-	$opt_version, 
+my ($opt_help, 		 # Prints full help (POD)
+	$opt_version, 	 # Prints version
 	$opt_input, 
 	$opt_verbose, 
 	$opt_debug, 
-	$opt_color, 
-	$opt_nonewline,
-	$opt_noheader,
+	$opt_nocolor, 
+	$opt_nonewline, 
 	$opt_pretty
 );
-
 my $result = GetOptions(
     'f|format=s'    => \$opt_format,
     's|separator=s' => \$opt_separator,
     'p|pretty'      => \$opt_pretty,
     'n|nonewline'   => \$opt_nonewline,
-    'j|noheader'    => \$opt_noheader,
-    'c|color'       => \$opt_color,
     'h|help'        => \$opt_help,
     'v|version'     => \$opt_version,
     'd|debug'       => \$opt_debug,
@@ -74,6 +70,8 @@ foreach my $file (@ARGV) {
 		open STDIN, '<', "$file" || die " FATAL ERROR:\n Unable to open file for reading ($file).\n";
 	}
 
+	say STDERR " [Reading] $file ...\r" if ($opt_debug);
+
 
 
 	my @aux;
@@ -89,7 +87,7 @@ foreach my $file (@ARGV) {
 	}
 	my $n50 = n50fromHash(\%sizes, $slen);
 
-	say STDERR "[$file]\tTotalSize:$slen;N50:$n50;Sequences:$n" if ($opt_debug);
+	say STDERR "[$file]\tSeq:$n\tSum:$slen\tN50:$n50" if ($opt_debug);
 	
 	my %metrics = (
 		'seqs' => $n,
@@ -114,15 +112,20 @@ if (!$opt_format or $opt_format eq 'default') {
 } elsif ($opt_format eq 'json') {
 	#my $json = encode_json \@file_stats;
 	my $json = JSON->new->allow_nonref;
-	my $pretty_printed = $json->pretty->encode( \%output_object );
-	say $pretty_printed;
+	my $printed;
+	if ($opt_pretty) {
+		$printed = $json->pretty->encode( \%output_object );
+	}else {
+		$printed = $json->encode( \%output_object );
+	}
+	say $printed;
 } elsif ($opt_format eq 'tsv') {
-	my @fields = ('path', 'seqs', 'size', 'N50');
-	say '#', join($opt_separator, @fields) if (!defined $opt_noheader);
+	my @fields = ('seqs', 'size', 'N50');
+	say "#File\t", join($opt_separator, @fields);
 
 	foreach my $r (keys %output_object) {
-		print $r,$opt_separator; 
-		for (my $i = 1; $i <= $#fields; $i++) {
+		print "$r$opt_separator";
+		for (my $i = 0; $i <= $#fields; $i++) {
 			print $output_object{$r}{$fields[$i]};
 			if ($i == $#fields) {
 				print "\n";
@@ -143,8 +146,8 @@ sub debug {
 }
 sub printMessage {
 	my ($message, $title, $title_color, $message_color) = @_;
-	$title_color   = 'reset' if (!defined $title_color or !colorvalid($title_color) or !$opt_color);
-	$message_color = 'reset' if (!defined $message_color or !colorvalid($message_color) or !$opt_color);
+	$title_color   = 'reset' if (!defined $title_color or !colorvalid($title_color) or $opt_nocolor);
+	$message_color = 'reset' if (!defined $message_color or !colorvalid($message_color) or $opt_nocolor);
 
 	
 	say STDERR colored("$title", $title_color), "\t", colored("$message", $message_color);
@@ -160,14 +163,15 @@ sub n50fromHash {
 }
 
 sub version {
-	printMessage("$program{NAME}, ver. $program{VERSION}", '', 'reset', 'bold green');
-	printMessage(qq(
+	say "
+	$program{NAME}, ver. $program{VERSION}";
+	say STDERR<<END;
 	$program{AUTHOR}
 
 	Program to calculate N50 from multiple FASTA/FASTQ files.
-	Type --help (or -h) to see the full documentation.), '', 'blue', 'green');
+	Type --help (or -h) to see the full documentation.
 END
-
+exit 0;
 }
 sub readfq {
     my ($fh, $aux) = @_;
@@ -254,7 +258,7 @@ by a line for each file given as input with: file path,
 as received, total number of sequences, total size in bp,
 and finally N50.
 
-=item I<-j, --noheader>
+=item I<--noheader>
 
 When used with 'tsv' output format, will suppress header
 line.
@@ -269,20 +273,18 @@ newline character after the N50. Usually used in bash scripting.
 If used with 'json' output format, will format the JSON
 in pretty print mode. Example:
 
- 
- {
+{
    "file1.fa" : {
-     "size" : 290,
-     "N50" : "290",
-     "seqs" : 2
-  },
+      "size" : 290,
+      "N50" : "290",
+      "seqs" : 2
+   },
    "file2.fa" : {
-     "N50" : "456",
-     "size" : 456,
-     "seqs" : 2
-  }
- }
- 
+      "N50" : "456",
+      "size" : 456,
+      "seqs" : 2
+   }
+}
 
 =back
 
