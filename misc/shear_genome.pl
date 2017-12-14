@@ -2,10 +2,12 @@
 
 use v5.12;
 use Getopt::Long;
+use File::Basename;
 
 our $format      = 'fastq';
 our $read_length = 100;
 our $step        = 10;
+our $delim       = ':';
 print STDERR<<END;
     -----------------------------------------
         Shear Fasta File
@@ -24,6 +26,7 @@ my $result = GetOptions(
     'f|format=s'=> \$format,
     'l|length=i'=> \$read_length,
     's|step=i'  => \$step,
+    'd|delimiter=s'=>\$delim,
     'version'   => \$opt_version,
     'help'      => \$opt_help
 );
@@ -36,6 +39,8 @@ die " FATAL ERROR\n Missing parameters.\n" if (!$opt_genome and !$opt_out);
 
 open my $fh, '<', "$opt_genome" || die " FATAL ERROR\n Unable to open input file: <$opt_genome>.\n";
 open my $out, '>', "$opt_out.$format" || die " FATAL ERROR\n Unable to write to <$opt_out.$format>\n";
+
+our $base = basename($opt_genome);
 my @aux = undef;
 my ($n, $slen, $qlen) = (0, 0, 0);
 while (my ($ref_name, $seq) = readfq(\$fh, \@aux)) {
@@ -47,7 +52,7 @@ while (my ($ref_name, $seq) = readfq(\$fh, \@aux)) {
         $read_number++;
         my $read = substr($seq, $pos, $read_length);
         my $qual = 'I' x $read_length;
-        my $name = $ref_name.'_'.$pos. " #$read_number";
+        my $name = $base.$delim.$ref_name.$delim.$pos. " #$read_number";
         if ($format eq 'fastq') {
             say {$out} qq(\@$name\n$read\n+\n$qual);
         } else {
