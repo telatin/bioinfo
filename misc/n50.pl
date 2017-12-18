@@ -6,6 +6,7 @@ use v5.12;
 use Pod::Usage;
 use Term::ANSIColor  qw(:constants colorvalid colored);
 use Getopt::Long;
+use File::Basename;
 use JSON;
 
 local $Term::ANSIColor::AUTORESET = 1;
@@ -35,7 +36,8 @@ my ($opt_help,
 	$opt_color, 
 	$opt_nonewline,
 	$opt_noheader,
-	$opt_pretty
+	$opt_pretty,
+	$opt_basename,
 );
 
 my $result = GetOptions(
@@ -44,6 +46,7 @@ my $result = GetOptions(
     'p|pretty'      => \$opt_pretty,
     'n|nonewline'   => \$opt_nonewline,
     'j|noheader'    => \$opt_noheader,
+    'b|basename'    => \$opt_basename,
     'c|color'       => \$opt_color,
     'h|help'        => \$opt_help,
     'v|version'     => \$opt_version,
@@ -92,6 +95,7 @@ foreach my $file (@ARGV) {
 
 	say STDERR "[$file]\tTotalSize:$slen;N50:$n50;Sequences:$n" if ($opt_debug);
 	
+	$file = basename($file) if ($opt_basename);
 	my %metrics = (
 		'seqs' => $n,
 		'N50'  => $n50,
@@ -257,6 +261,11 @@ by a line for each file given as input with: file path,
 as received, total number of sequences, total size in bp,
 and finally N50.
 
+=item I<-b, --basename>
+
+Instead of printing the path of each file, will only print
+the filename, stripping relative or absolute paths to it.
+
 =item I<-j, --noheader>
 
 When used with 'tsv' output format, will suppress header
@@ -264,7 +273,7 @@ line.
 
 =item I<-n, --nonewline>
 
-If used with 'default' output format, will NOT print the
+If used with 'default' or 'csv' output format, will NOT print the
 newline character after the N50. Usually used in bash scripting.
 
 =item I<-p, --pretty>
@@ -286,6 +295,10 @@ in pretty print mode. Example:
   }
  }
  
+=item I<-h, --help>
+
+Will display this full help message and quit, even if other
+arguments are supplied.
 
 =back
 
