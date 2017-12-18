@@ -23,7 +23,8 @@ my %formats = (
   'tsv'     => 'Tab separated output (file, seqs, total size, N50)',
   'full'    => 'Not implemented',
   'json'    => 'JSON (JavaScript Object Notation) output',
-  'short'   => 'Not Implemented'
+  'short'   => 'Not Implemented',
+  'csv'     => 'Alias for tsv',
  );
 
 my ($opt_help, 
@@ -112,11 +113,13 @@ if (!$opt_format or $opt_format eq 'default') {
 		}		
 	}
 } elsif ($opt_format eq 'json') {
-	#my $json = encode_json \@file_stats;
+	
 	my $json = JSON->new->allow_nonref;
 	my $pretty_printed = $json->pretty->encode( \%output_object );
 	say $pretty_printed;
-} elsif ($opt_format eq 'tsv') {
+
+} elsif ($opt_format eq 'tsv' or $opt_format eq 'csv') {
+
 	my @fields = ('path', 'seqs', 'size', 'N50');
 	say '#', join($opt_separator, @fields) if (!defined $opt_noheader);
 
@@ -124,7 +127,7 @@ if (!$opt_format or $opt_format eq 'default') {
 		print $r,$opt_separator; 
 		for (my $i = 1; $i <= $#fields; $i++) {
 			print $output_object{$r}{$fields[$i]};
-			if ($i == $#fields) {
+			if ($i == $#fields and !$opt_nonewline) {
 				print "\n";
 			} else {
 				print $opt_separator;
