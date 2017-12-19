@@ -41,7 +41,7 @@ my ($opt_help,
 	$opt_basename,
 	$opt_template,
 );
-our $tab = "\t";
+our $tab  = "\t";
 our $new  = "\n";
 my $result = GetOptions(
     'f|format=s'    => \$opt_format,
@@ -69,6 +69,11 @@ if (defined $opt_format) {
 
 		die " FATAL ERROR:\n Output format not valid (--format '$opt_format').\n Use one of the following: " .
 			join(', ',@list) . ".\n";
+	}
+
+	if ($formats{$opt_format} eq 'Not implemented') {
+		print STDERR " WARNING: Format '$opt_format' not implemented yet. Switching to 'tsv'.\n";
+		$opt_format = 'tsv';
 	}
 
 }
@@ -149,6 +154,7 @@ if (!$opt_format or $opt_format eq 'default') {
 		$output_string =~s/{new}/$new/g;
 		$output_string =~s/{tab}/$tab/g;
 		$output_string =~s/{(\w+)}/$output_object{$r}{$1}/g;
+		$output_string =~s/{path}/$r/g;
 		print $output_string;
 	}
 }
@@ -263,7 +269,8 @@ n50.pl [options] [FILE1 FILE2 FILE3...]
 
 =item I<-f, --format>
 
-Output format: default, tsv, json. See below for details
+Output format: default, tsv, json, custom. 
+See below for format specific switches.
 
 =item I<-s, --separator>
 
@@ -286,7 +293,15 @@ line.
 =item I<-n, --nonewline>
 
 If used with 'default' or 'csv' output format, will NOT print the
-newline character after the N50. Usually used in bash scripting.
+newline character after the N50. Usually used in bash scripting.ù
+
+=item I<-t, --template>
+
+String to be used with 'custom' format. Will be used as template
+string for each sample, replacing {new} with newlines, {tab} with
+tab and {N50}, {seqs}, {size}, {path} with sample's N50, number of sequences,
+total size in bp and file path respectively (the latter will
+respect --basename if used).
 
 =item I<-p, --pretty>
 
