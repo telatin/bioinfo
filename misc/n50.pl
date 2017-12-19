@@ -26,6 +26,7 @@ my %formats = (
   'json'    => 'JSON (JavaScript Object Notation) output',
   'short'   => 'Not Implemented',
   'csv'     => 'Alias for tsv',
+  'custom'  => 'Custom format with --template STRING',
  );
 
 my ($opt_help, 
@@ -38,8 +39,10 @@ my ($opt_help,
 	$opt_noheader,
 	$opt_pretty,
 	$opt_basename,
+	$opt_template,
 );
-
+our $tab = "\t";
+our $new  = "\n";
 my $result = GetOptions(
     'f|format=s'    => \$opt_format,
     's|separator=s' => \$opt_separator,
@@ -47,6 +50,7 @@ my $result = GetOptions(
     'n|nonewline'   => \$opt_nonewline,
     'j|noheader'    => \$opt_noheader,
     'b|basename'    => \$opt_basename,
+    't|template=s'  => \$opt_template,
     'c|color'       => \$opt_color,
     'h|help'        => \$opt_help,
     'v|version'     => \$opt_version,
@@ -138,6 +142,14 @@ if (!$opt_format or $opt_format eq 'default') {
 			}
 
 		}
+	}
+} elsif ($opt_format eq 'custom') {
+	foreach my $r (keys %output_object) {
+		my $output_string = $opt_template;
+		$output_string =~s/{new}/$new/g;
+		$output_string =~s/{tab}/$tab/g;
+		$output_string =~s/{(\w+)}/$output_object{$r}{$1}/g;
+		print $output_string;
 	}
 }
 
