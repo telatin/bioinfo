@@ -163,8 +163,8 @@ sub extractSeq {
 
 sub message {
   my $message = shift @_;
-  say STDERR;
-  
+  say STDERR '';
+
   if (substr($message, 0, 1) eq '#') {
   	print STDERR color('green') if ($opt_color);
     print STDERR substr($message, 1),"\n" if ($opt_verbose);
