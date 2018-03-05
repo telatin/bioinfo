@@ -2,29 +2,42 @@
 use warnings;
 use v5.14;
 use LWP::Simple;
-
+use Term::ANSIColor;
 our $status_url = 'https://bryn.climb.ac.uk/status';
+our $disabled_string = 'Launching new instances disabled';
 my  $status_html = get($status_url);
 my  $any = '.*?';
 
-my  $regex = 	"<h2>([ [A-Za-z]+)<.h2>$any".
+my  $regex = 	"<h2>([ [A-Za-z]+)<.h2>".
+		"($any)<table$any".
 	     	"<td>Virtual machines running<.td>$any<td>(\\d+)</td>$any".
 		"vCPU utilisation$any<.td>$any".
 		"(\\d+) / (\\d+)$any".
 		"<td>RAM utilisation$any<.td>$any".
 		"<td>(\\d+) / (\\d+)$any<.tr>";
 
-while ($status_html=~/$regex/sg) {
-	my $vm_ratio  = "0.00%";
-	$vm_ratio     = sprintf("%.1f", 100*$3/$4) if ($4);
-	my $ram_ratio = "0.00%";
-	$ram_ratio    = sprintf("%.1f", 100*$5/$6) if ($6);
+print "# $status_url\n";
 
+while ($status_html=~/$regex/sg) {
+	my $datacenter = $1;
+	my $vm_ratio  = "0.00%";
+	$vm_ratio     = sprintf("%.1f", 100*$4/$5) if ($5);
+	my $ram_ratio = "0.00%";
+	$ram_ratio    = sprintf("%.1f", 100*$6/$7) if ($7);
 	print "\n";
-	print "# $1\n";
-	print "VMs:\t$2\n";
-	print "vCPU:\t$vm_ratio\t$3/$4\n";
-	print "RAM:\t$ram_ratio\t$5/$6\n";
+
+	print color('bold'), "# $1\n", color('reset');
+
+	print "VMs:\t$3\n" if (defined $3);
+	print "vCPU:\t$vm_ratio\t$4/$5\n" if (defined $4 and defined $5);
+	print "RAM:\t$ram_ratio\t$6/$7\n" if (defined $6 and defined $7);
+	if ($2=~/$disabled_string/) {
+		print color('red');
+		print "\n >>> WARNING: NEW INSTANCES DISABLED in $datacenter \n";
+		print color('reset');
+	}
+
+
 }
 
 # EXAMPLE RECORD
