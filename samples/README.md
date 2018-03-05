@@ -14,7 +14,8 @@ A list of example files to start using the Linux Command Line interface (CLI)
 ## Content
 
 ### Bioinformatics files: phate directory
-.
+
+```
 ./phage
 ./phage/vir_assembly_stats.txt
 ./phage/vir_genomic.fna
@@ -33,14 +34,18 @@ A list of example files to start using the Linux Command Line interface (CLI)
 ./phage/vir_protein.faa
 ./phage/assembly_status.txt
 ./phage/vir_assembly_report.txt
+```
 
 ### Compressed archives
+```
 ./archives
 ./archives/archive.tar.gz
 ./archives/archive.zip
+```
 
 ### Small files to test
 
+```
 ./files
 ./files/wine.csv
 ./files/Sample.pdf
@@ -49,3 +54,4 @@ A list of example files to start using the Linux Command Line interface (CLI)
 ./files/cars.csv
 ./files/introduction.txt
 ./README.md
+```
