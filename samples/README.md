@@ -8,8 +8,8 @@ A list of example files to start using the Linux Command Line interface (CLI)
 
 ## History
 
-2018-03-05   Package updated, "files" directory added
-2018-02-29   First release
+  * 2018-03-05   Package updated, "files" directory added
+  * 2018-02-29   First release
 
 ## Content
 
