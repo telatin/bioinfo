@@ -2,11 +2,12 @@
 # A script to create multiple users in a server for teaching sessions
 
 use strict;
-our $prefix = 'climb.user';		#Username prefix (plus number)
-our $passwd = 'PasswordForStudentx';	#User password (plus number)
+our $prefix = 'qibuser';		#Username prefix (plus number)
+our $passwd = 'QuadramBash-';	#User password (plus number)
 
-our $HOMEPATH = '/home/';		# Where to store user directories
-our $tutorialdir = 'tutorial';		# Writeable directory in each student home
+our $HOMEPATH = '/homes/qib/';		# Where to store user directories
+our $tutorialdir = 'course';		# Writeable directory in each student home
+
 # Check admin privileges
 my $testsudo = 'ls /root';
 `$testsudo 2>/dev/null`;
@@ -17,10 +18,13 @@ if ($?) {
 # List home directories
 my $listbsb = "ls $HOMEPATH | grep ". $prefix . ".. | sort";
 my @users = `$listbsb`;
+print STDERR " == Students found\n";
+print join ("\n -", @users);
 
 my $maxId = 0;
 
 # CHECK CURRENT USERS (in the format $prefix$number
+print STDERR " == Checking students\n";
 foreach my $user (@users) {
 	chomp($user);
 	$user =~/$prefix(\d+)/;
@@ -41,13 +45,14 @@ die "Nothing to do. Type as parameter the NUMBER of new users to create\n" if (!
 print STDERR "\n == CREATING NEW USERS\n";
 
 $maxId++;
+
 for (my $id = $maxId; $id <= ($maxId + $ARGV[0]); $id++) {
-	my $number = sprintf("%03d", $number);
-	print STDERR " Adding user \#$number\n";
+	my $number = sprintf("%03d", $id);
 	my $p = $passwd . $number;
 	my $u = $prefix . $number;
-	my $addUserCmd = qq(perl -e 'print "$p\n$p\n\n\n\n\n\n"' | adduser $u);
-	run($addUserCmd);
+	print STDERR " Adding user \#$number: $u:$p\n";
+	my $addUserCmd = qq(perl -e 'print "$p\n$p\n\n\n\n\n\n"' | adduser $u --home "$HOMEPATH/$u");
+	run($addUserCmd, 'creating user');
 	fix($u, $p);
 }
 
@@ -58,7 +63,7 @@ sub fix {
 	
 	# Reset the password, just in case...
 	my $resetpasswd = qq(echo "$username:$password" | sudo chpasswd);
-	run($resetpasswd);
+	run($resetpasswd, 'resetting password');
 
 	# Add username to group "ubuntu" and create writeable subdirectory in his home
         my $cmd = qq(usermod -a -G ubuntu $username &&
@@ -66,18 +71,19 @@ sub fix {
                 mkdir -p $HOMEPATH/$username/$tutorialdir &&
                 chmod 777  $HOMEPATH/$username/$tutorialdir);
 
-        run($cmd);
+        run($cmd, 'tutorial dir');
 
 	# Create a directory in the public web folder and a link in the home (~/web)
         run(qq(mkdir -p /mnt/galaxy/home/researcher/public_html/$username/ &&
-	        ln -s /mnt/galaxy/home/researcher/public_html/$username/ $HOMEPATH/$username/web/) )
-        if (!-e "/home/$username/");
+	        ln -s /mnt/galaxy/home/researcher/public_html/$username/ $HOMEPATH/$username/web) )
+        if (!-e "$HOMEPATH/$username/web");
 
 }
 
 
 sub run {
 	my $command = shift @_;
+	print STDERR "#$command\n";
 	my $output = `$command`;
 	if ($?) {
 		die "Unable to perform action:\n#$command\n";
