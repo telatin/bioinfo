@@ -11,12 +11,13 @@ open STDIN, '<', $ARGV[0];
 my $TOTAL_SEQ = 0;
 my $PRINTED_SEQ = 0;
 while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
+	
+ 	$TOTAL_SEQ++;
 	unless ($TOTAL_SEQ % 10000) {
 		print STDERR "$PRINTED_SEQ/$TOTAL_SEQ printed (", sprintf("%.2f", 100*$PRINTED_SEQ/$TOTAL_SEQ), ")\r";
 	}
 	my ($status, $offset, $score) = smithwaterman($seq);
 
- 	$TOTAL_SEQ++;
 	if ($status) {
 		$PRINTED_SEQ++;
 		#print "$seq\n";
