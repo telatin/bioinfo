@@ -1,9 +1,10 @@
 #!/usr/bin/env perl
 our $opt_debug = 0;
 our $tag = 'CCAGGGTTGAGATGTGTATAAGAGACAG';
-our $min_score = 26;
-our $min_length = 30;
+our $min_score = 25;
+our $min_length = 25;
 our $printer_batch = 500;
+
 my @aux = undef;
 my ($name, $seq, $qual);
 my ($n, $slen, $comment, $qlen) = (0, 0, 0);
