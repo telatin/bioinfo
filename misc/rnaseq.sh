@@ -32,7 +32,8 @@ mkdir -p "$ALNDIR"
 mkdir -p "$TRIMDIR"
 if [[ -e ".trimmed" ]]
 then
-	echo " - Trimming: skipping"
+	echo -n " - Skipping trimming: "
+	cat ".trimmed"
 else
 	for FILE in $(ls reads/*_R1*);
         do
@@ -41,7 +42,7 @@ else
 
 		if [[ -e "$TRIMDIR/$BASE.done" ]];
 		then
-			echo "   - SKIPPIG $FILE"
+			echo "   - Skipping $BASE ($FILE/$REV)"
 			continue;
 		fi
 
@@ -54,7 +55,7 @@ else
 		touch "$TRIMDIR/$BASE.done";
 	done
 
-	touch ".trimmed"
+	date > ".trimmed"
 fi
 
 ###
@@ -63,7 +64,8 @@ fi
 
 if [[ -e ".aligned" ]]
 then
-	echo " - Alignment step: skipping "
+	echo -n " - Skipping alignment: "
+	cat ".aligned"
 else
 
 	echo " - Alignment step: starting"
@@ -91,6 +93,6 @@ else
 	# Mark step done if OK
 	if (( $? < 1 ));
 	then
-		touch ".aligned"
+		date > ".aligned"
 	fi
 fi
