@@ -2,6 +2,7 @@
 our $opt_debug = 0;
 our $tag = 'CCAGGGTTGAGATGTGTATAAGAGACAG';
 our $min_score = 26;
+our $min_length = 30;
 my @aux = undef;
 my ($name, $seq, $qual);
 my ($n, $slen, $comment, $qlen) = (0, 0, 0);
@@ -9,16 +10,22 @@ my ($n, $slen, $comment, $qlen) = (0, 0, 0);
 open STDIN, '<', $ARGV[0];
 
 my $TOTAL_SEQ = 0;
+my $TAG_SEQ = 0;
 my $PRINTED_SEQ = 0;
 while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
-	
+
  	$TOTAL_SEQ++;
 	unless ($TOTAL_SEQ % 10000) {
-		print STDERR "$PRINTED_SEQ/$TOTAL_SEQ printed (", sprintf("%.2f", 100*$PRINTED_SEQ/$TOTAL_SEQ), ")\r";
+		print STDERR "$TAG_SEQ/$TOTAL_SEQ have tag; $PRINTED_SEQ/$TOTAL_SEQ printed (", sprintf("%.2f", 100*$PRINTED_SEQ/$TOTAL_SEQ), ")\r";
 	}
 	my ($status, $offset, $score) = smithwaterman($seq);
 
+
 	if ($status) {
+		$TAG_SEQ++;
+
+		next if ( (length($seq) - $offset) > $min_length);
+		
 		$PRINTED_SEQ++;
 		#print "$seq\n";
 		#print '-' x $offset, substr($seq, $offset), "\n";
