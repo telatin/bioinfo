@@ -15,7 +15,8 @@ for my $i (1..6) {
 }
 #                            Tn
 #                    <----------------->
-our $tag = 'CCAGGGTTGAGATGTGTATAAGAGACAG';
+our $tag   =    'CCAGGGTTGAGATGTGTATAAGAGACAG';
+$tag = 'GCAGGCATGCCAGGGTTGAGATGTGTATAAGAGACAG';
 our $opt_min_input_seq_size = 36;
 our $min_score = 14;
 our $min_length = 25;
@@ -23,7 +24,7 @@ our $printer_batch = 500;
 our $save_files;
 our $outputdir;
 
-our ($TAG_FILE, $SHORT_FILE, $NOTAG_FILE, $LONG_TAG_FILE);
+our ($TAG_FILE, $SHORT_FILE, $NOTAG_FILE, $LONG_TAG_FILE, $TAGS_SEQ, $LAST_BASES);
 my $GetOptions = GetOptions(
 
 	't|tag=s'               => \$tag,
@@ -46,6 +47,8 @@ if (defined $outputdir) {
 		open $SHORT_FILE, '>', "$outputdir/too_short.fastq" || die $!, "\n";
 		open $NOTAG_FILE, '>', "$outputdir/untagged_reads.fastq" || die $!, "\n";
 		open $LONG_TAG_FILE, '>', "$outputdir/tags_long.fastq" || die $!, "\n";
+		open $TAGS_SEQ, '>',"$outputdir/tags_seqs.txt" || die $!, "\n";
+		open $LAST_BASES, '>',"$outputdir/last_bases.txt" || die $!, "\n";
 	} else {
 		die " FATAL ERROR:\n Unable to find output directory <$outputdir>\n";
 	}
@@ -66,6 +69,8 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
  	$counter{'Total_Sequeces_parsed'}++;
  	my $seq_size = length($seq);
 
+ 	print {$LAST_BASES} substr($seq, -8), "\n";
+
  	# Nbucket?
  	if ($seq_size < $opt_min_input_seq_size) {
  		$counter{"Sequence_length_<$opt_min_input_seq_size"}++;
@@ -85,6 +90,7 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
 	my ($status, $offset, $score, $sequencematch, $identities, $align_start) = smithwaterman($seq);
       #($status, $+[0],   $diag, $match,          $identities, $-[0]
 
+    print {$TAGS_SEQ} "$sequencematch\t$seq_size\t$offset\n"if ( (length($seq) - $offset) < 1 );
     my $t1 = [gettimeofday];
 	my  $t0_t1 = tv_interval $sub_t0, $t1;
 	my  $elapsed = tv_interval ($t0, [gettimeofday]);
