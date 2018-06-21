@@ -12,6 +12,7 @@ my (
    $opt_keep_comments,
    $opt_help,
 );
+my @opt_strip_strings = ();
 
 my $opt = GetOptions(
 	'i|input-file=s'    => \$opt_input_file,
@@ -19,6 +20,7 @@ my $opt = GetOptions(
 	'c|comment-char=s'  => \$opt_comment_char,
 	'f|field=i'         => \$opt_field,
 	's|separator=s'     => \$opt_separator,
+	'r|remove=s'        => \@opt_strip_strings,
 	'help'              => \$opt_help
 );
 
