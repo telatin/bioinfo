@@ -14,17 +14,21 @@ my (
 );
 my @opt_strip_strings = ();
 
+
 my $opt = GetOptions(
 	'i|input-file=s'    => \$opt_input_file,
 	'k|keep-comments'   => \$opt_keep_comments,
 	'c|comment-char=s'  => \$opt_comment_char,
+
 	'f|field=i'         => \$opt_field,
 	's|separator=s'     => \$opt_separator,
+
 	'r|remove=s'        => \@opt_strip_strings,
 	'help'              => \$opt_help
 );
 
-print_help() if ($opt_help);
+ 
+print_help() if ($opt_help or !defined($opt_input_file));
 open my $fh, '<', $opt_input_file || die " FATAL ERROR:\n Unable to read <$opt_input_file>.\n";
 $opt_field--;
 
@@ -42,7 +46,7 @@ while (my $line = readline($fh)) {
 			$counter{$fields[$i]}++;
 			die " FATAL ERROR: Ambiguous names in columns after striping. ".
 			"\n".
-			" --field=$opt_field --separator=$opt_separator\n".
+			" --field=",++$opt_field," --separator=$opt_separator\n".
 			"\nEXAMPLE:\n", $fields[++$i], "\n"
 				if ($counter{$fields[$i]} > 1);
 		}
@@ -58,6 +62,9 @@ sub strip_sample_name {
 	my $string = shift @_;
 	$string =~s/(\.fq|\.fastq|\.bam)//g;
 	$string = basename($string);
+	for my $remove_this (@opt_strip_strings) {
+		$string =~s/$remove_this//g;
+	}
 	my @string_slices = split /$opt_separator/, $string;
 
 	return $string_slices[$opt_field];
