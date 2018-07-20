@@ -2,13 +2,19 @@
 my $rdp_flag;
 my $userdp = " -t /lustre/telatin/db/trainset14_032015.rdp.tax -r /lustre/telatin/db/trainset14_032015.rdp.fasta ";
 use strict;
+
+
+
 use Time::HiRes qw( time );
 use Getopt::Long;
 use File::Basename;
 use Term::ANSIColor  qw(:constants);
 use Pod::Usage;
+use File::Basename;
+my $script_path = dirname(__FILE__);
 
-my $program_version = '1.07';
+my $program_version = '1.10';
+
 my @nums = (0..9,'a'..'z','A'..'Z');
 my %nums = map { $nums[$_] => $_ } 0..$#nums;
 
@@ -16,6 +22,7 @@ my $min_merge = 20;
 my $max_merge = 280;
 my $log_file;
 my $enable_rdp;
+
 # short descr
 print STDERR "
 	-----------------------------------------------------------------------
@@ -38,8 +45,8 @@ print STDERR "
 
 # dependencies
 my %bin = (
-	'fastq_quality_tool.pl' => 1,
-	'qiime_map_multiplexer.pl' => 1,
+	"$script_path/fastq_quality_tool.pl" => 1,
+	"$script_path/qiime_map_multiplexer.pl" => 1,
 	'flash' => 1,
 	'validate_mapping_file.py' => 1
 );
@@ -360,7 +367,7 @@ sub timeStamp {
 	return $t;
 }
 sub check_dependencies {
-	`. /etc/profile.d/modules.sh && module load qiime `;
+	`. /etc/profile.d/modules.sh && module load qiime ` if (-e "/etc/profile.d/modules.sh");
 	foreach my $binary (keys %bin) {
 		deb("Starting;Checking $binary\n");
 		`which "$binary" 2>&1 > /dev/null`;
@@ -381,7 +388,7 @@ sub initializeLog {
 	my $md5 = `md5sum "$0"`;
 	open LOG, ">>", "$log_file" || die " ERROR 2\n Unable to write to log file: \"$log_file\"\n";
 	my $bar = '=' x 80;
-	print LOG "$bar\n$bar\n MICROBITTER $program_version\nLaunched by: $user_name";
+	print LOG "$bar\n$bar\n PREPARE_QIIME $program_version\nLaunched by: $user_name";
 	print LOG "Working directory: $current_directory";
 	print LOG "Time stamp: $time";
 	print LOG "MD5: $md5\n";
@@ -407,11 +414,11 @@ __END__
 
 =head1 NAME
  
-B<microbitter.pl> - Pipeline for Italian Microbiome Project projects
+B<qiime1_closedref.pl> - Pipeline for Italian Microbiome Project projects
 
 =head1 SYNOPSIS
  
-microbitter.pl -i INPUT_DIR -o OUTPUT_DIR -m MAPPING_FILE
+qiime1_closedref.pl -i INPUT_DIR -o OUTPUT_DIR -m MAPPING_FILE
  
 =head1 DEPENDENCIES
  
