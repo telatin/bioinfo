@@ -39,6 +39,8 @@ print STDERR "
 	 -d     Debug
 	 -h     Extended help
 	
+
+	Script path '$script_path' should contain dependencies
 ";
 
 
@@ -47,6 +49,7 @@ print STDERR "
 my %bin = (
 	"$script_path/fastq_quality_tool.pl" => 1,
 	"$script_path/qiime_map_multiplexer.pl" => 1,
+	'tree' => 1,
 	'flash' => 1,
 	'validate_mapping_file.py' => 1
 );
