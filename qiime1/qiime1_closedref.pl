@@ -341,10 +341,10 @@ sub run {
 	`echo "[INFO] Finished in $elapsed $msg s " >> $log_file`;
 
 	print STDERR YELLOW "\t\t$msg Done in $elapsed\n", RESET;
+	die " FORCED EXIT (status=$?) after:\n $cmd\n" if ($?);
 
 	return $?;
 
-	die " FORCED EXIT (status=$?) after:\n $cmd\n" if ($?);
 }
 sub formatsec { 
   my $time = shift; 
