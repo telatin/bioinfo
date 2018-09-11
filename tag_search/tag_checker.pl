@@ -38,7 +38,7 @@ if (defined $outputdir) {
 		open $SHORT_FILE, '>', "$outputdir/too_short.fastq" || die $!, "\n";
 		open $NOTAG_FILE, '>', "$outputdir/untagged_reads.fastq" || die $!, "\n";
 	} else {
-		die " FATAL ERROR:\n "
+		die " FATAL ERROR:\n Missing output directory ($outputdir)\n";
 	}
 
 }
@@ -69,17 +69,28 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
 	if ($status) {
 		$TAG_SEQ++;
 
-		next if ( (length($seq) - $offset) > $min_length);
+		if ( (length($seq) - $offset) > $min_length) {
+			print {$SHORT_FILE} '@', $name, " $offset|$score|$PRINTED_SEQ/$TOTAL_SEQ\n", 
+			substr($seq, $offset), "\n",
+			"+\n",
+			substr($qual, $offset), "\n";
+			next;
+		} else {
 
 		$PRINTED_SEQ++;
 		#print "$seq\n";
 		#print '-' x $offset, substr($seq, $offset), "\n";
-		print '@', $name, " $offset|$score|$PRINTED_SEQ/$TOTAL_SEQ\n", 
+		print {$TAG_FILE} '@', $name, " $offset|$score|$PRINTED_SEQ/$TOTAL_SEQ\n", 
 			substr($seq, $offset), "\n",
 			"+\n",
 			substr($qual, $offset), "\n";
+		}
 
-
+	} else {
+		print {$NOTAG_FILE} '@', $name, " |$offset|$score|seq_no=$TOTAL_SEQ\n", 
+			$seq, "\n",
+			"+\n",
+			$qual, "\n";
 	}
 }
 
