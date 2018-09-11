@@ -69,7 +69,7 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
 	if ($status) {
 		$TAG_SEQ++;
 
-		if ( (length($seq) - $offset) > $min_length) {
+		if ( (length($seq) - $offset) < $min_length) {
 			print {$SHORT_FILE} '@', $name, " $offset|$score|$PRINTED_SEQ/$TOTAL_SEQ\n", 
 			substr($seq, $offset), "\n",
 			"+\n",
