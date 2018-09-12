@@ -2,7 +2,7 @@
 
 use v5.14;
 use Getopt::Long;
- 
+
 
 our $opt_debug = 0;
 #                            Tn
@@ -56,19 +56,19 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
 
  	# Update process
 	unless ($TOTAL_SEQ % $printer_batch) {
-		print STDERR 
+		print STDERR
 			"$NOTAG_SEQ/$TOTAL_SEQ prescreened but without tag tag; ",
-			"$PRINTED_SEQ/$TOTAL_SEQ prescreened, with tag, printed (", 
+			"$PRINTED_SEQ/$TOTAL_SEQ prescreened, with tag, printed (",
 			sprintf("%.2f", 100*$PRINTED_SEQ/$TOTAL_SEQ), ")\r";
 	}
 
-	
+
 
 	my ($status, $offset, $score) = smithwaterman($seq);
 
 	$seq  = substr($seq, $offset);
 	$qual = substr($qual, $offset);
-	
+
 
 	if ( $status and length($seq) >= $min_length ) {
 		my $print_seq = '@' . $name . " V$status|off=$offset|scr=$score|num=$TOTAL_SEQ\n$seq\n+\n$qual\n";
@@ -78,7 +78,7 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
 		$NOTAG_SEQ++;
 	}
 
-	
+
 
 
 }
@@ -97,13 +97,13 @@ sub print_buffer {
 	if ($_[1] or ($counter % $print_buffer_count) )  {
 		print $buffer;
 		$buffer = '';
-	} 
+	}
 
 }
 
 sub smithwaterman {
 	my $seq1 = shift @_;
-	
+
 
 	# scoring scheme
 	my $MATCH     =  1; # +1 for letters that match
@@ -132,28 +132,28 @@ sub smithwaterman {
 	 for(my $i = 1; $i <= length($seq2); $i++) {
 	     for(my $j = 1; $j <= length($seq1); $j++) {
 	         my ($diagonal_score, $left_score, $up_score);
-	         
+
 	         # calculate match score
 	         my $letter1 = substr($seq1, $j-1, 1);
-	         my $letter2 = substr($seq2, $i-1, 1);      
+	         my $letter2 = substr($seq2, $i-1, 1);
 	         if ($letter1 eq $letter2) {
 	             $diagonal_score = $matrix[$i-1][$j-1]{score} + $MATCH;
 	          }
 	         else {
 	             $diagonal_score = $matrix[$i-1][$j-1]{score} + $MISMATCH;
 	          }
-	         
+
 	         # calculate gap scores
 	         $up_score   = $matrix[$i-1][$j]{score} + $GAP;
 	         $left_score = $matrix[$i][$j-1]{score} + $GAP;
-	         
+
 	         if ($diagonal_score <= 0 and $up_score <= 0 and $left_score <= 0) {
 	             $matrix[$i][$j]{score}   = 0;
 	             $matrix[$i][$j]{pointer} = "none";
 	             next; # terminate this iteration of the loop
 	          }
 
-	         
+
 	         # choose best score
 	         if ($diagonal_score >= $up_score) {
 	             if ($diagonal_score >= $left_score) {
@@ -174,7 +174,7 @@ sub smithwaterman {
 	                 $matrix[$i][$j]{pointer} = "left";
 	              }
 	          }
-	         
+
 	       # set maximum score
 	         if ($matrix[$i][$j]{score} > $max_score) {
 	             $max_i     = $i;
@@ -197,7 +197,7 @@ sub smithwaterman {
 
 	 while (1) {
 	     last if $matrix[$i][$j]{pointer} eq "none";
-	     
+
 	     if ($matrix[$i][$j]{pointer} eq "diagonal") {
 	         $align1 .= substr($seq1, $j-1, 1);
 	         $align2 .= substr($seq2, $i-1, 1);
@@ -215,7 +215,7 @@ sub smithwaterman {
 	         $align2 .= substr($seq2, $i-1, 1);
 	         $i--;
 	         $up++;
-	      }  
+	      }
 	 }
 
 	$align1 = reverse $align1;
@@ -225,7 +225,7 @@ sub smithwaterman {
 	$match =~s/-//g;
 
 	$seq1=~/$match/g;
-	
+
 	if ($opt_debug) {
 
 		print STDERR "~" x 80, "\n", ">$match<", join(',',@-),"\n";
@@ -243,9 +243,7 @@ sub smithwaterman {
 
 }
 
-sub print_buffer {
-	my ($)
-}
+
 sub readfq {
     my ($fh, $aux) = @_;
     @$aux = [undef, 0] if (!(@$aux));	# remove deprecated 'defined'
