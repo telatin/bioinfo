@@ -2,7 +2,10 @@
 
 use v5.14;
 use Getopt::Long;
-
+# scoring scheme
+our $MATCH     =  1; # +1 for letters that match
+our $MISMATCH = -1; # -1 for letters that mismatch
+our $GAP       = -2; # -1 for any gap
 
 our $opt_debug = 0;
 #                            Tn
@@ -105,10 +108,7 @@ sub smithwaterman {
 	my $seq1 = shift @_;
 
 
-	# scoring scheme
-	my $MATCH     =  1; # +1 for letters that match
-	my $MISMATCH = -1; # -1 for letters that mismatch
-	my $GAP       = -2; # -1 for any gap
+
 
 	# initialization
 	my @matrix;
@@ -149,7 +149,7 @@ sub smithwaterman {
 
 	         if ($diagonal_score <= 0 and $up_score <= 0 and $left_score <= 0) {
 	             $matrix[$i][$j]{score}   = 0;
-	             $matrix[$i][$j]{pointer} = "none";
+	             $matrix[$i][$j]{pointer} = "n"; #none
 	             next; # terminate this iteration of the loop
 	          }
 
@@ -158,20 +158,20 @@ sub smithwaterman {
 	         if ($diagonal_score >= $up_score) {
 	             if ($diagonal_score >= $left_score) {
 	                 $matrix[$i][$j]{score}   = $diagonal_score;
-	                 $matrix[$i][$j]{pointer} = "diagonal";
+	                 $matrix[$i][$j]{pointer} = "d"; #diag
 	              }
 	             else {
 	                 $matrix[$i][$j]{score}   = $left_score;
-	                 $matrix[$i][$j]{pointer} = "left";
+	                 $matrix[$i][$j]{pointer} = "l"; #left
 	              }
 	          } else {
 	             if ($up_score >= $left_score) {
 	                 $matrix[$i][$j]{score}   = $up_score;
-	                 $matrix[$i][$j]{pointer} = "up";
+	                 $matrix[$i][$j]{pointer} = "u"; #up
 	              }
 	             else {
 	                 $matrix[$i][$j]{score}   = $left_score;
-	                 $matrix[$i][$j]{pointer} = "left";
+	                 $matrix[$i][$j]{pointer} = "l"; # left
 	              }
 	          }
 
@@ -196,21 +196,21 @@ sub smithwaterman {
      my $left = 0;
 
 	 while (1) {
-	     last if $matrix[$i][$j]{pointer} eq "none";
+	     last if $matrix[$i][$j]{pointer} eq "n";
 
-	     if ($matrix[$i][$j]{pointer} eq "diagonal") {
+	     if ($matrix[$i][$j]{pointer} eq "d") {
 	         $align1 .= substr($seq1, $j-1, 1);
 	         $align2 .= substr($seq2, $i-1, 1);
 	         $i--; $j--;
 	         $diag++;
 	      }
-	     elsif ($matrix[$i][$j]{pointer} eq "left") {
+	     elsif ($matrix[$i][$j]{pointer} eq "l") {
 	         $align1 .= substr($seq1, $j-1, 1);
 	         $align2 .= "-";
 	         $j--;
 	         $left++;
 	      }
-	     elsif ($matrix[$i][$j]{pointer} eq "up") {
+	     elsif ($matrix[$i][$j]{pointer} eq "u") {
 	         $align1 .= "-";
 	         $align2 .= substr($seq2, $i-1, 1);
 	         $i--;
