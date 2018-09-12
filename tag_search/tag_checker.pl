@@ -9,7 +9,6 @@ our $opt_debug = 0;
 #                    <----------------->
 our $tag = 'CCAGGGTTGAGATGTGTATAAGAGACAG';
 
-our $print_buffer_count = 2000;
 our $min_score = 25;
 our $min_length = 25;
 our $printer_batch = 10000;
@@ -32,7 +31,17 @@ my @aux = undef;
 my ($name, $seq, $qual);
 my ($n, $slen, $comment, $qlen) = (0, 0, 0);
 
+if (defined $outputdir) {
+	if (-d "$outputdir") {
+		$save_files = 1;
+		open $TAG_FILE,   '>', "$outputdir/tags.fastq" || die $!, "\n";
+		open $SHORT_FILE, '>', "$outputdir/too_short.fastq" || die $!, "\n";
+		open $NOTAG_FILE, '>', "$outputdir/untagged_reads.fastq" || die $!, "\n";
+	} else {
+		die " FATAL ERROR:\n Missing output directory ($outputdir)\n";
+	}
 
+}
 
 if (defined $ARGV[0]) {
 	open STDIN, '<', $ARGV[0] || die " FATAL ERROR:\n Unable to read $ARGV[0].\n";
@@ -42,65 +51,60 @@ if (defined $ARGV[0]) {
 
 my $TOTAL_SEQ = 0;
 my $TAG_SEQ = 0;
-my $NOTAG_SEQ = 0;
 my $PRINTED_SEQ = 0;
-my $pre_screen_length = $min_length + length($tag);
 
 while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
 
  	$TOTAL_SEQ++;
-
-	my $seq_len = length($seq);
-
-	next if ($seq_len < $pre_screen_length);
-
  	# Update process
 	unless ($TOTAL_SEQ % $printer_batch) {
 		print STDERR 
-			"$NOTAG_SEQ/$TOTAL_SEQ prescreened but without tag tag; ",
-			"$PRINTED_SEQ/$TOTAL_SEQ prescreened, with tag, printed (", 
+			"$TAG_SEQ/$TOTAL_SEQ have tag; ",
+			"$PRINTED_SEQ/$TOTAL_SEQ printed (", 
 			sprintf("%.2f", 100*$PRINTED_SEQ/$TOTAL_SEQ), ")\r";
 	}
 
-	
 
 	my ($status, $offset, $score) = smithwaterman($seq);
+	my $new_seq = $seq;
+	my $new_qual = $qual;
 
-	$seq  = substr($seq, $offset);
-	$qual = substr($qual, $offset);
-	
+	if ($status) {
+		$new_seq  = substr($seq, $offset);
+		$new_qual = substr($qual, $offset);
+	} 
+	my $print_seq = '@' . $name . " $status|off=$offset|scr=$score|num=$TOTAL_SEQ\n$new_seq\n+\n$new_qual\n";
 
-	if ( $status and length($seq) >= $min_length ) {
-		my $print_seq = '@' . $name . " V$status|off=$offset|scr=$score|num=$TOTAL_SEQ\n$seq\n+\n$qual\n";
+
+	if ($status) {
+		$TAG_SEQ++;
+
+		if ( (length($seq) - $offset) < $min_length) {
+			print {$SHORT_FILE} '@', $name, " $offset|$score|$PRINTED_SEQ/$TOTAL_SEQ\n", 
+			substr($seq, $offset), "\n",
+			"+\n",
+			substr($qual, $offset), "\n";
+			next;
+		} else {
+
 		$PRINTED_SEQ++;
-		print_buffer($print_seq);
+		#print "$seq\n";
+		#print '-' x $offset, substr($seq, $offset), "\n";
+		print {$TAG_FILE} '@', $name, " $offset|$score|$PRINTED_SEQ/$TOTAL_SEQ\n", 
+			substr($seq, $offset), "\n",
+			"+\n",
+			substr($qual, $offset), "\n";
+		}
+
 	} else {
-		$NOTAG_SEQ++;
+		print {$NOTAG_FILE} '@', $name, " |$offset|$score|seq_no=$TOTAL_SEQ\n", 
+			$seq, "\n",
+			"+\n",
+			$qual, "\n";
 	}
-
-	
-
-
 }
-print_buffer('', 1);
 
 print STDERR "$PRINTED_SEQ/$TOTAL_SEQ printed (", sprintf("%.2f", 100*$PRINTED_SEQ/$TOTAL_SEQ), ")\n";
-
-
-sub print_buffer {
-	state $counter = 0;
-	state $buffer  = '';
-
-	$buffer .= $_[0];
-	$counter++;
-
-	if ($_[1] or ($counter % $print_buffer_count) )  {
-		print $buffer;
-		$buffer = '';
-	} 
-
-}
-
 sub smithwaterman {
 	my $seq1 = shift @_;
 	
@@ -242,10 +246,7 @@ sub smithwaterman {
 	return ($status, $+[0], $diag, $match);
 
 }
-
-sub print_buffer {
-	my ($)
-}
+ 
 sub readfq {
     my ($fh, $aux) = @_;
     @$aux = [undef, 0] if (!(@$aux));	# remove deprecated 'defined'
