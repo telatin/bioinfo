@@ -56,7 +56,10 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
 
 	my $seq_len = length($seq);
   print STDERR "### $seq\n" if ($opt_debug);
-	next if ($seq_len < $pre_screen_length);
+	if ($seq_len < $pre_screen_length) {
+    print STDERR "### Skipping for size\n" if ($opt_debug);
+    next;
+  }
 
  	# Update process
 	unless ($TOTAL_SEQ % $printer_batch) {
