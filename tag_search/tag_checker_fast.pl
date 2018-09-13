@@ -38,9 +38,10 @@ my ($n, $slen, $comment, $qlen) = (0, 0, 0);
 
 
 if (defined $ARGV[0]) {
+  print STDERR "Opening '$ARGV[0]'...\n" if ($opt_debug);
 	open STDIN, '<', $ARGV[0] || die " FATAL ERROR:\n Unable to read $ARGV[0].\n";
 } else {
-	print STDERR " [waiting sequences from STDIN]\n";
+	print STDERR " WARNING: waiting sequences from STDIN\n";
 }
 
 my $TOTAL_SEQ = 0;
@@ -54,7 +55,7 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
  	$TOTAL_SEQ++;
 
 	my $seq_len = length($seq);
-
+  print STDERR "### $seq\n" if ($opt_debug);
 	next if ($seq_len < $pre_screen_length);
 
  	# Update process
