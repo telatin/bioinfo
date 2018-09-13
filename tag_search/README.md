@@ -1,7 +1,7 @@
 # TRADIS UTILITIES
 
 
-## tag_searchÃ*.pl
+## tag_search{*}.pl
 Family of Perl script to trim an adaptor from a FASTQ file keeping the downstream sequence. It uses a slow Smith-Waterman match and can be used mainly 
 for diagnostic/testing purposes.
 
