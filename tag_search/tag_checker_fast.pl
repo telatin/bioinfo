@@ -15,7 +15,7 @@ our $tag = 'CCAGGGTTGAGATGTGTATAAGAGACAG';
 our $print_buffer_count = 2000;
 our $min_score = 25;
 our $min_length = 25;
-our $printer_batch = 10000;
+our $printer_batch = 100000;
 our $save_files;
 our $outputdir;
 
@@ -101,8 +101,8 @@ sub print_buffer {
 
 	$buffer .= $_[0];
 	$counter++;
-  print STDERR ">> print_buffer($counter) called\n" if ($opt_debug);
-	if ($_[1] or ($counter % $print_buffer_count) )  {
+
+	if ($_[1] or ($counter % $print_buffer_count == 0) )  {
 		print $buffer;
 		$buffer = '';
 	}
@@ -111,7 +111,6 @@ sub print_buffer {
 
 sub smithwaterman {
 	my $seq1 = shift @_;
-  print STDERR "~~ smithwaterman($seq1)\n"if ($opt_debug);
 
 
 
