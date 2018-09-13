@@ -55,9 +55,9 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
  	$TOTAL_SEQ++;
 
 	my $seq_len = length($seq);
-  print STDERR "### $seq\n" if ($opt_debug);
+  print STDERR "\n## $seq\n" if ($opt_debug);
 	if ($seq_len < $pre_screen_length) {
-    print STDERR "### Skipping for size\n" if ($opt_debug);
+    print STDERR "## Skipping for size\n" if ($opt_debug);
     next;
   }
 
@@ -72,7 +72,7 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
 
 
 	my ($status, $offset, $score) = smithwaterman($seq);
-
+  print STDERR "~~ end ~~\n" if ($opt_debug);
 	$seq  = substr($seq, $offset);
 	$qual = substr($qual, $offset);
 
@@ -95,12 +95,13 @@ print STDERR "$PRINTED_SEQ/$TOTAL_SEQ printed (", sprintf("%.2f", 100*$PRINTED_S
 
 
 sub print_buffer {
+
 	state $counter = 0;
 	state $buffer  = '';
 
 	$buffer .= $_[0];
 	$counter++;
-
+  print STDERR ">> print_buffer($counter) called\n" if ($opt_debug);
 	if ($_[1] or ($counter % $print_buffer_count) )  {
 		print $buffer;
 		$buffer = '';
@@ -110,21 +111,21 @@ sub print_buffer {
 
 sub smithwaterman {
 	my $seq1 = shift @_;
-
+  print STDERR "~~ smithwaterman($seq1)\n"if ($opt_debug);
 
 
 
 	# initialization
 	my @matrix;
 	$matrix[0][0]{score}   = 0;
-	$matrix[0][0]{pointer} = "none";
+	$matrix[0][0]{pointer} = "n";
 	for(my $j = 1; $j <= length($seq1); $j++) {
 	     $matrix[0][$j]{score}   = 0;
-	     $matrix[0][$j]{pointer} = "none";
+	     $matrix[0][$j]{pointer} = "n";
 	}
 	for (my $i = 1; $i <= length($seq2); $i++) {
 	     $matrix[$i][0]{score}   = 0;
-	     $matrix[$i][0]{pointer} = "none";
+	     $matrix[$i][0]{pointer} = "n";
 	}
 
 	# fill
@@ -200,6 +201,7 @@ sub smithwaterman {
      my $left = 0;
 
 	 while (1) {
+
 	     last if $matrix[$i][$j]{pointer} eq "n";
 
 	     if ($matrix[$i][$j]{pointer} eq "d") {
