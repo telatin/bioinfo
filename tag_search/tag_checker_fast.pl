@@ -90,7 +90,7 @@ while (($name, $seq, $comment, $qual) = readfq(\*STDIN, \@aux)) {
 
 }
 print_buffer('', 1);
-
+die "Nothing done: $TOTAL_SEQ total sequences\n" unless ($TOTAL_SEQ);
 print STDERR "$PRINTED_SEQ/$TOTAL_SEQ printed (", sprintf("%.2f", 100*$PRINTED_SEQ/$TOTAL_SEQ), ")\n";
 
 
