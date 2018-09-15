@@ -73,7 +73,8 @@ while (my $n1 = <R1> ) {
 
   chomp($n1);
   chomp($n2);
-
+  ($n1) = split /\s+/, $n1;
+  ($n2) = split /\s+/, $n2;
   die "Mismatching names in sequence $c:
 $n1 != $n2\n" if ($n1 ne $n2);
 }
