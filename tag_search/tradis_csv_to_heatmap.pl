@@ -11,7 +11,9 @@ my $opt_version = undef;
 my $opt_debug   = undef;
 my $opt_min_q   = 0.001;
 my $opt_key     = 'cpm';
-my $opt_fc_ths  = 2;
+my $opt_fc_ths;
+my $opt_pass;
+my $opt_min_sum;
 my $opt_min_check = 1;
 my $opt_grep;
 my $opt_strip;
@@ -42,6 +44,10 @@ my $GetOptions = GetOptions(
   's|strip=s'        => \$opt_strip,    # Strip this string from file names
   'k|keep-ext'       => \$opt_keep_ext,
   'i=s'              => \$opt_inspect,
+
+  'fcths=f'          => \$opt_fc_ths,
+  'minsum=f'         => \$opt_min_sum,
+  'pass'             => \$opt_pass,
 );
 
 die " FATAL ERROR: -k,--key error: valid values are 'cpm', 'logfc' or 'q'\n"
@@ -105,15 +111,21 @@ foreach my $gene (sort keys %matrix) {
   my $line = "$gene\t";
   my $check = 0;
   my $check_val = 0;
-
+  my $gene_sum = 0;
   $COUNTERS{'genes_total'}++;
   foreach my $file (sort @FILES) {
     my $str = '';
     my $sep = "\t";
     $sep = "\n" if ($file eq $FILES[$#FILES]);
     my $val = 0 + $matrix{$gene}{$file}{$opt_key};
+    $val = fc_change($val) if (defined $opt_fc_ths);
 
+    if ($opt_pass) {
+      $val = 0;
+      $val = 1000 if (defined $matrix{$gene}{$file}{'q'} and $matrix{$gene}{$file}{'q'} <= $opt_min_q);
+    }
 
+    $gene_sum += $val;
     if (defined $matrix{$gene}{$file}{'q'} and $matrix{$gene}{$file}{'q'} <= $opt_min_q) {
       $check++;
       $str = '<OK>';
@@ -122,11 +134,12 @@ foreach my $gene (sort keys %matrix) {
 
     if ($opt_debug and $gene=~/$opt_inspect/) {
       print STDERR Dumper $matrix{$gene}{$file};
-      print STDERR "[$gene:$opt_inspect:$file]\n";
-      print STDERR "[q$str $matrix{$gene}{$file}{'q'} <= $opt_min_q; $opt_key $matrix{$gene}{$file}{$opt_key}]\n";
+      print STDERR "[$gene:$opt_inspect:$file > <<$val>>]\n";
+      print STDERR "[q $str $matrix{$gene}{$file}{'q'} <= $opt_min_q; $opt_key $matrix{$gene}{$file}{$opt_key}]\n";
     }
   }
-  if ($check >= $opt_min_check) {
+  if ($check >= $opt_min_check ) {
+    next if (defined $opt_min_sum and $gene_sum <= $opt_min_sum);
     print $line;
     $COUNTERS{'genes_passed'}++;
     $COUNTERS{"passed_$check"}++;
@@ -144,13 +157,14 @@ foreach my $key (sort keys %COUNTERS) {
 
 sub fc_change {
   my $value = shift;
-  if ($value <= -1 * abs($opt_fc_ths))  {
+  if ( $value <= -1 * abs($opt_fc_ths) )  {
     return -1;
-  } elsif ($value >= abs($opt_fc_ths) )
+  } elsif ($value >= abs($opt_fc_ths) ) {
     return +1;
-  } else {
+  } elsif ($value < abs($opt_fc_ths) or  $value > -1 * abs($opt_fc_ths) ){
     return 0;
   }
+  return 1000;
 }
 sub deb {
   return if ! $opt_debug;
