@@ -1,5 +1,4 @@
 #!/usr/bin/env perl
-#!/usr/bin/env perl
 
 use v5.14;
 use Getopt::Long;
@@ -72,6 +71,13 @@ open R2, $readmode2, $filename_R2 || die $error_R2;
 my $output_error_R1 = "FATAL ERROR:\n * Unable to write output R1 ",${output_basename}.'_R1.fastq', "\n";
 my $output_error_R2 = "FATAL ERROR:\n * Unable to write output R2 ",${output_basename}.'_R2.fastq', "\n";
 
+if (-e "${output_basename}_R1.fastq") {
+  die " FATAL ERROR: output found: ${output_basename}_R1.fastq\n";
+}
+if (-e "${output_basename}_R2.fastq") {
+  die " FATAL ERROR: output found: ${output_basename}_R2.fastq\n";
+}
+
 open my $O1, '>', ${output_basename}.'_R1.fastq' || die $output_error_R1;
 open my $O2, '>', ${output_basename}.'_R2.fastq' || die $output_error_R2;
 
@@ -79,12 +85,15 @@ open my $O2, '>', ${output_basename}.'_R2.fastq' || die $output_error_R2;
 our %reads;
 our $counter_R1 = 0;
 our $counter_R2 = 0;
-our $common = 0;
+our $total_R1   = 0;
+our $total_R2   = 0;
+our $common     = 0;
 
 # -----------------------------------------------------------------------
 my @aux = undef;
 
 while (my ($name, $seq, $qual) = readfq(\*R1, \@aux)) {
+    $total_R1++;
     next if (
                 ( length($seq) != length($qual) )
             or
@@ -94,12 +103,14 @@ while (my ($name, $seq, $qual) = readfq(\*R1, \@aux)) {
     $reads{$name} = 1;
     $counter_R1++;
 }
-print STDERR " File R1 passed: $counter_R1 reads\n";
+print STDERR "# File R1 passed: $counter_R1 reads\n";
 
 # -----------------------------------------------------------------------
 
+
 my @aux = undef;
 while (my ($name, $seq, $qual) = readfq(\*R2, \@aux)) {
+    $total_R2++;
     next if (
                 ( length($seq) != length($qual) )
             or
@@ -109,25 +120,33 @@ while (my ($name, $seq, $qual) = readfq(\*R2, \@aux)) {
     $counter_R2++;
 
     if ($reads{$name}) {
-        print {$O2} '@', $name, "\n", $seq, "\n+\n", $qual, "\n";
+        #print {$O2} '@', $name, "\n", $seq, "\n+\n", $qual, "\n";
         $reads{$name} = 2;
         $common++;
     }
 }
-print STDERR " File R2 ($filename_R2) printed: $counter_R2 total\n";
-
+my $ratio = '0.00';
+$ratio = sprintf("%.2f", 100*$counter_R2/$total_R2) if ($total_R2);
+print STDERR "# File R2 ($filename_R2) printed: $counter_R2 ($ratio %)\n";
 
 close R1;
+close R2;
+
+
+
 open  R1, $readmode1, $filename_R1 || die $error_R1;
-my @aux = undef;
-while (my ($name, $seq, $qual) = readfq(\*R1, \@aux)) {
-    print {$O1} '@', $name, "\n", $seq, "\n+\n", $qual, "\n"
-        if ($reads{$name} == 2);
-}
+open  R1, $readmode2, $filename_R2 || die $error_R2;
 
-print STDERR " File R1 ($filename_R1) printed\n";
+$ratio = sprintf("%.2f", 100*$counter_R2/$total_R1) if ($total_R1);
+print STDERR "# File R1 ($filename_R1) printed: $common ($ratio %)\n\n";
 
-print STDERR " Common sequences: $common\n";
+print STDERR "
+Reads R1:   $total_R1
+Reads R2:   $total_R2
+Valid R1:   $counter_R1
+Valid R2:   $counter_R2
+Common:     $common
+";
 
 sub readfq {
     my ($fh, $aux) = @_;
