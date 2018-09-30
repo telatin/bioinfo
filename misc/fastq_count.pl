@@ -7,7 +7,6 @@ use Pod::Usage;
 use Term::ANSIColor  qw(:constants colorvalid colored);
 use Getopt::Long;
 use File::Basename;
-use JSON;
 
 local $Term::ANSIColor::AUTORESET = 1;
 
