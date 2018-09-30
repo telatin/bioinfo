@@ -41,17 +41,20 @@ version() if defined $opt_version;
 
 
 foreach my $file (@ARGV) {
-	
+	my $print_name = $file;
+	$print_name = basename($file) if ($opt_basename);
+		
 	if (!-e "$file" and $file ne '-') {
 		die " FATAL ERROR:\n File not found ($file).\n";	
 	} elsif ($file eq '-') {
 		$file = '<STDIN>';
+	} elsif ($file =~/gz$/) {
+		$file = qq(gzcat "$file"|);
 	} else {
 		open STDIN, '<', "$file" || die " FATAL ERROR:\n Unable to open file for reading ($file).\n";
 	}
 	my $counter = 0;
-	my $print_name = $file;
-	$print_name = basename($file) if ($opt_basename);
+
 	while (<STDIN>) {
 		$counter++;
 	}
