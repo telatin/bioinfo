@@ -32,13 +32,13 @@ print STDERR "
 	Produce a BIOM file from FNA and Mapping file.
 
 	 -i 	Input Directory (with list of .gz or .fastq files)
-	 -o 	Output Directory 
+	 -o 	Output Directory
 	 -m 	Mapping File
 	 -f     No filter
 	 --rdp  Enable RDP database
 	 -d     Debug
 	 -h     Extended help
-	
+
 
 	Script path '$script_path' should contain dependencies
 ";
@@ -73,7 +73,7 @@ my $get_opt =GetOptions(
     'f|nofilter'          => \$nofilter,
     'rdp'                 => \$enable_rdp,
     'd|debug'             => \$debug
-); 
+);
 
 pod2usage({-exitval => 0, -verbose => 2}) if ($help);
 
@@ -89,14 +89,14 @@ if ($enable_rdp) {
 	print STDERR " Using RDP as database.\n";
 	$rdp_flag = $userdp;
 }
-opendir(my $dh, $input_directory) || 
+opendir(my $dh, $input_directory) ||
 	die "Missing input directory (-i): $input_directory\n" . $!;
 
 die " Missing output directory (-o).\n" unless ($output_directory);
 unless (-d "$output_directory") {
 	`mkdir "$output_directory"`;
 	die " Unable to create output directory $output_directory.\n" if ($?);
-	
+
 }
 $log_file = $output_directory.'/log_file.txt';
 initializeLog($log_file);
@@ -130,11 +130,11 @@ while (my $current_file = readdir($dh))  {
 			deb("Skipping;$current_file");
 			next;
 		}
-		
+
 		#Strip .gz (should be decompressed now)
 		$current_file =~s/.gz$//;
 		my $readsNumber = fastq_count("$input_directory/$current_file");
-		die " FATAL ERROR: Decompressing the file should give \"$input_directory/$current_file\". \n I cant find it.\n" 
+		die " FATAL ERROR: Decompressing the file should give \"$input_directory/$current_file\". \n I cant find it.\n"
 			if (!-s "$input_directory/$current_file");
 		if ($strand eq 'R1') {
 			deb("Adding R1;$current_file");
@@ -148,7 +148,7 @@ while (my $current_file = readdir($dh))  {
 		}
 	} else {
 		deb("Skipping; $current_file not relevant");
-	
+
 	}
 
 }
@@ -162,11 +162,11 @@ my $mappingFake = "#SampleID\tBarcodeSequence\tLinkerPrimerSequence\tTreatment\t
 my $c = 0;
 foreach my $forward_file (keys %forward) {
 	$c++;
-	
-	
+
+
 	my $for = $input_directory.'/'.$forward{$forward_file};
 	my $rev = $input_directory.'/'.$reverse{$forward_file};
-	
+
 	my $primerRand = randomPrimer($c);
 	#my $readsNumber = fastq_count("$output_directory/$forward_file.extendedFrags.fastq");
 	#$mergedCount{$forward_file} = $readsNumber; #+1.07
@@ -184,15 +184,15 @@ unless ($mapping_file) {
 	$mapping_file = "$output_directory/mapping_auto.tsv";
 	open(O, ">", $mapping_file ) || die  "Unable to write mapping file to $mapping_file\n";
 	print O $mappingFake;
-	close O;	
+	close O;
 	deb("Mapping file created: $mapping_file");
 } else {
-	
+
 	my $copy = qq(cp "$mapping_file" "$output_directory/mapping_auto.tsv" );
 	run($copy, "Copying mapping file");
 	$mapping_file = "$output_directory/mapping_auto.tsv";
 }
-opendir(my $dh, "$output_directory") || 
+opendir(my $dh, "$output_directory") ||
 	die "Missing input directory (-i): $input_directory\n" . $!;
 
 
@@ -210,7 +210,7 @@ while (my $file = readdir($dh)){
 		my $unfilNumber = fastq_count("$output_directory/$file");
 		my $readsNumber = fastq_count("$output_directory/$out");
 		my @base = split /\./, $file;
-		
+
 		$filteredCount{$base[0]} = $readsNumber;
 		$mergedCount{$base[0]}   = $unfilNumber;
 	}
@@ -247,7 +247,7 @@ run("mkdir \"$output_directory/Fragments\"", "Initialize cleanup");
 my $clean = qq(mv "$output_directory/*.gz" "$output_directory/*.hist*"  "$output_directory/Fragments");
 run($clean, "Cleanup...");
 
-# Qiime 
+# Qiime
 # ---------------------------------
 print STDERR GREEN BOLD " STEP5. Qiime...\n", RESET;
 my $validate = qq(validate_mapping_file.py -s -m "$mapping_file");
@@ -260,11 +260,11 @@ my $filter = qq(filter_otus_from_otu_table.py -i "$output_directory/OTUs/otu_tab
 run($filter, "Filtering OTUs") unless ($nofilter);
 
 
-    
+
 sub randomPrimer {
 	my $number = shift;
 	my $base4  = to_base(4, $number);
-	$base4=~tr/0123/GACT/;
+	$base4=~tr/0123/ATCG/;
 	my $length = 8;
 	my $stretch = 'A' x ($length - length($base4));
 	my $result = $stretch.$base4;
@@ -286,7 +286,7 @@ sub to_base    {
         }
         return $rep;
     }
- 
+
 sub fr_base {
         my $base = shift;
         my $rep  = shift;
@@ -301,7 +301,7 @@ sub fr_base {
 
 sub deb {
 	return 0 if (!$debug);
-	
+
 	my $input = shift;
 	my $title;
 	my $message;
@@ -322,21 +322,21 @@ sub run {
 	my $timeStamp = timeStamp();
 	$public_run_subroutine_command++;
 	$descr = 'Computing...' unless ($descr);
-	
+
 	my $headerLog = "\n# --------------------------------------------------------------------\n".
 		"# [INFO] Running command $public_run_subroutine_command\n".
 		"# [INFO] Timestamp: $timeStamp\n";
 																					# echo ' (start)
 	`echo "$headerLog# [INFO] Task: $descr\n$cmd\n# --------- Command log ---------\necho '\n" >> $log_file`;
-	
+
 	print STDERR BOLD " [$public_run_subroutine_command]", RESET, "\t$descr\n", RESET;
 	print STDERR BLUE, "#$cmd\n", RESET if ($debug);
 	my $s = Time::HiRes::gettimeofday();
 	`$cmd 2>> $log_file`;
 	`echo "'\n" >> $log_file`;
-	
+
 	my $msg  = "[ !!! ERROR $? ]" if ($?);
-	
+
 	my $e = Time::HiRes::gettimeofday();
 	my $elapsed = formatsec(sprintf("%.2f", $e - $s));
 	my $tree = `tree "$output_directory"`;
@@ -349,20 +349,20 @@ sub run {
 	return $?;
 
 }
-sub formatsec { 
-  my $time = shift; 
-  my $days = int($time / 86400); 
-   $time -= ($days * 86400); 
-  my $hours = int($time / 3600); 
-   $time -= ($hours * 3600); 
-  my $minutes = int($time / 60); 
-  my $seconds = $time % 60; 
- 
-  $days = $days < 1 ? '' : $days .'d '; 
-  $hours = $hours < 1 ? '' : $hours .'h '; 
-  $minutes = $minutes < 1 ? '' : $minutes . 'm '; 
-  $time = $days . $hours . $minutes . $seconds . 's'; 
-  return $time; 
+sub formatsec {
+  my $time = shift;
+  my $days = int($time / 86400);
+   $time -= ($days * 86400);
+  my $hours = int($time / 3600);
+   $time -= ($hours * 3600);
+  my $minutes = int($time / 60);
+  my $seconds = $time % 60;
+
+  $days = $days < 1 ? '' : $days .'d ';
+  $hours = $hours < 1 ? '' : $hours .'h ';
+  $minutes = $minutes < 1 ? '' : $minutes . 'm ';
+  $time = $days . $hours . $minutes . $seconds . 's';
+  return $time;
 }
 sub timeStamp {
 	my $t = `date +%Y-%m-%d_%H:%M:%S`;
@@ -395,7 +395,7 @@ sub initializeLog {
 	print LOG "Working directory: $current_directory";
 	print LOG "Time stamp: $time";
 	print LOG "MD5: $md5\n";
-	
+
 	print LOG $bar."\n";
 	close LOG;
 }
@@ -416,21 +416,21 @@ __END__
 
 
 =head1 NAME
- 
+
 B<qiime1_closedref.pl> - Pipeline for Italian Microbiome Project projects
 
 =head1 SYNOPSIS
- 
+
 qiime1_closedref.pl -i INPUT_DIR -o OUTPUT_DIR -m MAPPING_FILE
- 
+
 =head1 DEPENDENCIES
- 
+
 This program require the whole Qiime 1.9 environment installed. In addition the following programs have to be in the PATH:
 
- * flash, available from https://ccb.jhu.edu/software/FLASH/ 
+ * flash, available from https://ccb.jhu.edu/software/FLASH/
  * qiime_map_multiplexer.pl
  * fastq_quality_tool.pl
-   
+
 =head1 PARAMETERS
 
 =over 12
@@ -445,7 +445,7 @@ Directory where all output files will be stored. Will be created if not exists.
 
 =item B<-m, --mapping-file> FILE
 
-Mapping file for the project. Each sample name has to start with the same code as the paired end file. 
+Mapping file for the project. Each sample name has to start with the same code as the paired end file.
 In general terms this parameter is B<optional> as the program will synthesise a fake mapping file.
 
 =item B<-f, --nofilter>
@@ -464,10 +464,9 @@ v. 1.07
  * Cleanup of intermediate files (reads)
  * Improved documentation
  * Load Module 'qiime' automatically
- 
+
 v. 1.06
  * Introducing "Validate mapping file step". Exit if failing.
- 
+
 v. 1.05
- * Bug fixing (check dependencies didn't check well) 
-	 
+ * Bug fixing (check dependencies didn't check well)
