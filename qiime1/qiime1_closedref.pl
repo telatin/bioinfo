@@ -370,7 +370,7 @@ sub timeStamp {
 	return $t;
 }
 sub check_dependencies {
-	`. /etc/profile.d/modules.sh && module load qiime ` if (-e "/etc/profile.d/modules.sh");
+	`. /etc/profile.d/modules.sh && module load qiime ` if (-e "/etc/profile.d/modules.sh" and -e "/lustre/");
 	foreach my $binary (keys %bin) {
 		deb("Starting;Checking $binary\n");
 		`which "$binary" 2>&1 > /dev/null`;
