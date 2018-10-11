@@ -2,7 +2,7 @@
 
 # A script to perform basic abundance statistics on
 # multiple files produced by
-# samtools view FILE.bam | cut -f 3 | sort | uniq -c 
+# samtools view FILE.bam | cut -f 3 | sort | uniq -c
 use v5.12;
 use Getopt::Long;
 use Carp qw(confess cluck);
@@ -61,13 +61,12 @@ foreach my $chr_name (sort {$gene_total{$b} <=> $gene_total{$a} } keys %ref_coun
 	$g++;
 	print  "$chr_name";
 	foreach my $file ( @sample_names ) {
-	
+
 		my $value = $ref_counts{$chr_name}{$file} ? $ref_counts{$chr_name}{$file} : 0;
 		$value = sprintf("%.5f", 100*$value/$sample_total{$file});
 		print "\t", $value;
 	}
-	say;
-	last if ($g > 20);
+	say; 
 }
 
 sub get_file_basename {
@@ -104,4 +103,3 @@ carp: not fatal, no backtrace
 cluck: not fatal, with backtrace
 croak: fatal, no backtrace
 confess: fatal, with backtrace
-
