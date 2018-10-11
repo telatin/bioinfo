@@ -39,6 +39,7 @@ my $n = 0;
 while (my ($name, $seq) = readfq(\*I, \@aux)) {
     ++$n;
     my $size = length($seq);
+    print STDERR ">$name ($size)\n" if ($opt_verbose);
     for (my $pos = 0; $pos < $size; $pos += $opt_max_chunk_size) {
       my $chunk = substr($seq, $pos, $opt_max_chunk_size);
       print O ">${name}_$pos:$opt_max_chunk_size\n$chunk\n";
