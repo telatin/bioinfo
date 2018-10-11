@@ -39,12 +39,17 @@ my $n = 0;
 while (my ($name, $seq) = readfq(\*I, \@aux)) {
     ++$n;
     my $size = length($seq);
-    print STDERR ">$name ($size)\n" if ($opt_verbose);
+
+    print STDERR ">$name ($size) " if ($opt_verbose);
+
+    my $chunk_num = 0;
     for (my $pos = 0; $pos < $size; $pos += $opt_max_chunk_size) {
+      $chunk_num++;
       my $chunk = substr($seq, $pos, $opt_max_chunk_size);
       print O ">${name}_$pos:$opt_max_chunk_size\n$chunk\n";
     }
 
+    print STDERR "\t$chunk_num\n" if ($opt_verbose);
 }
 
 
