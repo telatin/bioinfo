@@ -13,12 +13,13 @@ my $opt_verbose;
 my $opt_input_file;
 my $opt_output_file;
 my $opt_max_chunk_size = 5000;
-
+my $opt_min_chunk_size = 500;
 my $GetOptions = GetOptions(
     'v|verbose'          => \$opt_verbose,
     'i|input=s'          => \$opt_input_file,
     'o|output=s'         => \$opt_output_file,
     's|size=i'           => \$opt_max_chunk_size,
+    'm|minsize=i'        => \$opt_min_chunk_size,
 );
 
 unless (defined $opt_input_file) {
@@ -46,7 +47,8 @@ while (my ($name, $seq) = readfq(\*I, \@aux)) {
     for (my $pos = 0; $pos < $size; $pos += $opt_max_chunk_size) {
       $chunk_num++;
       my $chunk = substr($seq, $pos, $opt_max_chunk_size);
-      print O ">${name}_$pos:$opt_max_chunk_size\n$chunk\n";
+      print O ">${name}_$pos\n$chunk\n"
+        if (length($chunk)  > $opt_min_chunk_size );
     }
 
     print STDERR "\t$chunk_num\n" if ($opt_verbose);
