@@ -2,14 +2,36 @@
 
 set -euo pipefail
 
-
+this_script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )";
+tools_dir="$this_script_path/tools_sample_processor"
 opt_help=0;
 threads=4;
-while getopts t:h option
+outdir='processed_sample';
+
+### CHECK DEPENDENCIES
+
+for FILE in deinterleave.sh merge-paired-reads.sh sortmerna.sh; do
+    if  [ ! -e "$tools_dir/$FILE" ]; then
+        echo " FATAL ERROR: Unable to find required script <$FILE> in <$tools_dir>";
+        exit 3
+    fi 
+done
+echo " * Internal dependencies found"
+
+for COMMAND in ls sb.pl; do
+
+    command -v "$COMMAND" > /dev/null ||  (echo " FATAL ERROR: Unable to find dependency in path <$COMMAND>"; exit 8)
+
+done
+echo " * External commands found"
+
+### GET ARGUMENTS
+while getopts t:o:h option
 do
         case "${option}"
                 in
                         t) threads=${OPTARG};;
+                        o) outdir=${OPTARG};;
                         h) opt_help=1;;
                         ?) echo " Wrong parameter $OPTARG";;
          esac
@@ -50,4 +72,26 @@ if [ ! -e "$FILE2" ]; then
     exit 1
 fi
 
-###
+
+## CREATE DIRECTORY
+
+BASE=$(basename "$FILE1" | cut -f1 -d.  | cut -f1 -d_)
+
+if [ -d "$outdir" ]; then
+        echo " * Output directory found: <$outdir>"
+else
+    echo " * Attempt creating output directory <$outdir>"
+    mkdir -p "$outdir"
+fi
+
+CMD1="${tools_dir}/merge-paired-reads.sh \"$FILE1\" \"$FILE2\" \"$outdir\"/\"${BASE}.interleaved.fastq\"";
+ID1=`sb.pl --cores 1 --name $BASE.1 --run "$CMD1"`
+ID1=$(echo $ID1 | cut -f2 -d:)
+
+CMD2="${tools_dir}/sortmerna.sh \"$outdir\"/\"${BASE}.interleaved.fastq\" \"$outdir/\" ";
+ID2=`sb.pl --cores 4 --name $BASE.2 --after $ID1 --run "$CMD2"`
+ID2=$(echo $ID2 | cut -f2 -d:)
+
+
+
+
