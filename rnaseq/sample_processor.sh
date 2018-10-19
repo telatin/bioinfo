@@ -59,7 +59,7 @@ fi
 if [ ! -z ${2+x} ]; then
     FILE2=$2
 else
-    FILE2=${FILE1/_R1/R2};
+    FILE2=${FILE1/_R1/_R2};
 fi
 
 if  [[ $FILE1 == $FILE2 ]]; then
@@ -76,6 +76,8 @@ fi
 ## CREATE DIRECTORY
 
 BASE=$(basename "$FILE1" | cut -f1 -d.  | cut -f1 -d_)
+
+# Gunzip?
 
 if [ -d "$outdir" ]; then
         echo " * Output directory found: <$outdir>"
