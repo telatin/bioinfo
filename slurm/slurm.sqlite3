@@ -1,0 +1,13 @@
+CREATE TABLE jobs (
+   ...> id INT,
+   ...> name VARCHAR(250),
+   ...> owner VARCHAR(50),
+   ...> added DATETIME DEFAULT CURRENT_TIMESTAMP,
+   ...> command TEXT,
+   ...> script TEXT,
+   ...> pwd VARCHAR(200),
+   ...> options TEXT,
+   ...> notes TEXT,
+   ...> finished BOOLEAN
+   ...> );
+

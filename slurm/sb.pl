@@ -60,7 +60,7 @@ if ($opt_days > 1) {
 
 # Set sendmail iw invoked --mail
 if ($opt_sendmail) {
-	$opt_mail = 'begin,end,fail';
+	$opt_mail = 'end,fail';
 }
 
 # Enable EI (--ei) or Miniconda3 (--conda)
@@ -145,7 +145,8 @@ if ($opt_run or $opt_save) {
 	if ($opt_run) {
 		my $output = `sbatch "$sbatch_dir/${opt_jobname}.job"`;
 		$output=~/(\d+)/;
-		say "JobID:$1";
+		say $1;
+		print STDERR "JobID:$1\n";
 	}
 } else {
 	print $template;
@@ -164,7 +165,7 @@ sub getProgressiveNumber {
 	}
 	$max++;
 	return sprintf("%04d", $max);
-	exit;
+	#exit;
 }
 sub validate {
 
@@ -188,6 +189,10 @@ sub validate {
 		$name = $frags[0];
 	} else {
 		$name = basename($frags[1]);
+	}
+
+	if ( -e "$frags[0]") {
+		$name = basename($frags[0]);
 	}
 
 	foreach my $f (@frags) {
