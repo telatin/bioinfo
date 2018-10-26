@@ -59,9 +59,9 @@ open R1, $readmode1, $filename_R1 || die $error_R1;
 open R2, $readmode2, $filename_R2 || die $error_R2;
 
 my $c = 0;
-while ($n1 = <R1> ) {
+while (my $n1 = <R1> ) {
   $c++;
-  $n2 = <R2>;
+  my $n2 = <R2>;
 
   <R1>;
   <R1>;
@@ -73,7 +73,8 @@ while ($n1 = <R1> ) {
 
   chomp($n1);
   chomp($n2);
-
+  ($n1) = split /\s+/, $n1;
+  ($n2) = split /\s+/, $n2;
   die "Mismatching names in sequence $c:
 $n1 != $n2\n" if ($n1 ne $n2);
 }
