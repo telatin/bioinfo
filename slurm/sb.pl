@@ -3,11 +3,13 @@
 use v5.14;
 use Getopt::Long;
 use File::Basename;
+use Term::ANSIColor;
 our $jobs_dir   = $ENV{'HOME'} . '/slurm/';
 our $logs_dir   = $jobs_dir . '/logs';
 our $sbatch_dir = $jobs_dir . '/jobs';
 our $comments   = '';
 
+our $opt_search;
 my $opt_memory_gb = 16;
 my $opt_days      = 0;
 my $opt_hours     = 24;
@@ -43,11 +45,13 @@ my $GetOptions = GetOptions(
 	'ei'         => \$opt_ei,
 	'conda'      => \$opt_conda,
 	'intel'      => \$opt_intel,
+	'search=s'   => \$opt_search,
 	'verbose'    => \$opt_verbose,
 
 );
 init();
 help() if ($opt_help);
+search($opt_search) if ($opt_search);
 
 our $opt_mem_mb = $opt_memory_gb * 1000;
 
@@ -215,10 +219,14 @@ sub validate {
 }
 
 sub help {
-say STDERR<<END;
+print STDERR color('green'), "
  ------------------------------------------------------------------------------------
   Prepare job for SLURM scheduler at NBI/QIB
- ------------------------------------------------------------------------------------
+ ------------------------------------------------------------------------------------",
+color('reset');
+
+say STDERR<<END;
+
  General use:
  sb.pl [options]  'your unix command'
 
@@ -279,4 +287,48 @@ sub read_content_from_file {
 		print STDERR " * WARNING: Settings file <$file> was not found. Ignoring.\n" if ($opt_verbose);
 		return;
 	}
+}
+
+sub search {
+	my $id = shift @_;
+	$sbatch_dir; $logs_dir;	
+	my @jobs = getfiles($sbatch_dir, 'job', $id);
+	my @logs = getfiles($logs_dir,   'err', $id);
+
+	if ($#jobs == 0 and $jobs[0]) {
+		say   color('yellow'), "Job_file:", color('reset'), "$sbatch_dir/$jobs[0]";
+		print color('yellow'), "Job_cmd:", color('reset'), `tail -n 1 "$sbatch_dir/$jobs[0]"`;
+		if (! $logs[0]) {
+			say STDERR color('red'), "Process not finished", color('reset');
+		} elsif ($#logs == 0 and $logs[0]) {
+			# One jobs with this ID and only executed once!
+			my $err_lines = `cat "$logs_dir/$logs[0]"|wc -l`; chomp($err_lines);
+			say color('yellow'),  "Log_file:", color('reset'), "$logs_dir/$logs[0] ($err_lines lines)";
+			my $out=$logs[0];
+			$out=~s/err$/txt/;
+			my $out_lines = `cat "$logs_dir/$out"|wc -l`; chomp($out_lines);
+			say color('yellow'),  "Out_file:", color('reset'), "$logs_dir/$out ($out_lines lines)";
+		} else {
+			# One job with this ID, but executed multiple times
+			say join("\n - ",@logs);
+		}
+	} else {
+		say join("\n - ", @jobs);
+	}
+	
+	exit;
+}
+
+sub getfiles {
+	my ($dir, $ext, $name) = @_;
+	my @files;
+	return 0 if (! -d "$dir");
+	opendir my $dh, $dir or return 0;
+	while (my $file = readdir($dh)) {
+		
+		next if ($file !~/${ext}$/);
+		next if ($file !~/^$name/);
+		push(@files, "$file");
+	}
+	return @files;
 }
