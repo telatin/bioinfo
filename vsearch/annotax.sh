@@ -4,9 +4,8 @@
 this_script_path="$( cd "$(dirname "$0")" ; pwd -P )"
 vsearch_bin_path="vsearch"
 convert_script="$this_script_path/convert_usearch_tax.sh"
-
-silva_db_path="/git/local_db/silva_16s_v123.fa"
-rdp_db_path="$this_script_path/../db/rdp_16s_v16.fa"
+ 
+rdp_db_path="$this_script_path/rdp_16s_v16.fa"
 identity_cutoff=0.8
 threads=4
 opt_do_rdp=1
@@ -14,8 +13,6 @@ opt_do_silva=0
 
 echo " USAGE:
 $(basename $0) [options] Input_Fasta [Output_File]
-
-  -s         Enable annotation with SILVA (def: only RDP)
   -t INT     Threads [$threads]
   -i FLOAT   Identity threshold [$identity_cutoff]
 ";
@@ -27,8 +24,7 @@ do
 			t) threads=${OPTARG};;
 			i) identity_cutoff=${OPTARG};;
 			v) vsearch_bin_path=${OPTARG};;
-			s) opt_do_silva=1;;
-			?) echo " Wrong parameter $OPTARG";;
+ 			?) echo " Wrong parameter $OPTARG";;
 	 esac
 done
 shift "$(($OPTIND -1))"
@@ -68,12 +64,7 @@ set -euo pipefail
 $vsearch_bin_path  --no_progress --threads $threads --sintax "$1" --db "$rdp_db_path"   --tabbedout "$OUTPUT_BASE_NAME.rdp.txt"   \
 	--sintax_cutoff $identity_cutoff >> "$OUTPUT_BASE_NAME.rdp.log" 2>&1
 
-# Annotate with SILVA
-if [ $opt_do_silva -eq 1 ]; then
-				echo "#Database2:   $silva_db_path [-s]"
-				$vsearch_bin_path   --no_progress --threads $threads --sintax "$1" --db "$silva_db_path" --tabbedout "$OUTPUT_BASE_NAME.silva.txt" 	\
-				--sintax_cutoff $identity_cutoff >> "$OUTPUT_BASE_NAME.silva.log" 2>&1
-fi
+
 
 
 # Convert taxonomy format
