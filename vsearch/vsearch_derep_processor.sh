@@ -34,10 +34,6 @@ if [ NO$1 == NO ]; then
 fi
 
 
-if [ ! -e "$VSEARCH_BIN" ]; then
-    echo -e "${RED}FATAL ERROR${RESET}:  Missing VSEARCH $VSEARCH_BIN"
-    exit 11
-fi
 
 if [ ! -e "$MAP_SCRIPT" ]; then
     echo -e "${RED}FATAL ERROR${RESET}:  Missing MAP_SCRIPT $MAP_SCRIPT"
