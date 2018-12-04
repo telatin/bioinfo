@@ -2,7 +2,7 @@
 # Annotate a FASTA file using VSEARCH
 
 this_script_path="$( cd "$(dirname "$0")" ; pwd -P )"
-vsearch_bin_path="$this_script_path/vsearch_28"
+vsearch_bin_path="vsearch"
 convert_script="$this_script_path/convert_usearch_tax.sh"
 
 silva_db_path="/git/local_db/silva_16s_v123.fa"
