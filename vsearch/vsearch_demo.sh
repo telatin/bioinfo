@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -exo pipefail
 
 # Retrieve the _script_ parent directory
 thispath="$( cd "$(dirname "$0")" ; pwd -P )";
@@ -30,7 +30,7 @@ MAX_LEN=300
 STRIP_LEFT=20
 STRIP_RIGHT=20
 
-# Some nice colors
+# Declare color codes
 RED='\033[0;31m'
 GRN='\033[0;32m'
 YLL='\033[0;33m'
@@ -80,7 +80,7 @@ echo "
 #TrimPrimers  $STRIP_LEFT-$STRIP_RIGHT
 "
 
-if [ ! -e $VSEARCH_BIN ] || [ ! -e "$PROCESSOR_SCRIPT" ] || [ ! -e "$MAP_SCRIPT" ] || [ ! -e "$ANNOTAX_SCRIPT" ]; then
+if [ ! -e "$PROCESSOR_SCRIPT" ] || [ ! -e "$MAP_SCRIPT" ] || [ ! -e "$ANNOTAX_SCRIPT" ]; then
 	echo "ERROR: <$VSEARCH_BIN> or <$PROCESSOR_SCRIPT> or <$MAP_SCRIPT> or <$ANNOTAX_SCRIPT> not found."
 	exit 1;
 fi
