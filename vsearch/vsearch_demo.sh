@@ -171,5 +171,5 @@ $PROCESSOR_SCRIPT vsearch.samples.fasta
 
 # A script will annotate the taxonomy of the  OTU fasta file:
 echo -e "${YLL} Runnging annotation <$ANNOTAX_SCRIPT>${RESET}"
-$ANNOTAX_SCRIPT -s -i $identity_cutoff vsearch.otus.fasta
+$ANNOTAX_SCRIPT -i $identity_cutoff vsearch.otus.fasta
 
