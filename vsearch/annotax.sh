@@ -35,10 +35,7 @@ shift "$(($OPTIND -1))"
 
 
 
-if [ ! -e "$vsearch_bin_path" ]; then
-	echo "VSEARCH binary not found at: $vsearch_bin_path"
-	exit 1;
-fi
+
 
 if [ ! -e "$rdp_db_path" ]; then
         echo "VSEARCH database RDP not found at: $silva_db_path"
