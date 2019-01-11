@@ -58,10 +58,14 @@ If you want to store your e-mail address as default recipient, simply type the e
 ### Example
 
  - To view the script:
+
 `sb.pl -c 6 -h 8 -s samtools-1.5 "samtools view -bS aln.sam | samtools sort -@ 6 -o aln.bam -"`
 
  - To run the script:
+
 `sb.pl -c 6 -h 8 -s samtools-1.5  --run "samtools view -bS aln.sam | samtools sort -@ 6 -o aln.bam -"`
+
+
 	
 ### Author
 [Andrea Telatin](https://quadram.ac.uk/people/andrea-telatin/)
