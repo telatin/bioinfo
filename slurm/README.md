@@ -44,7 +44,7 @@ If you want to store your e-mail address as default recipient, simply type the e
    --conda                      Source Anaconda (requires $HOME/conda_source)
 
    --mail                       Send mail with job details
-   --address                    Specify e-mail address (andrea.telatin+hpc@gmail.com)
+   --address                    Specify e-mail address 
 
    --save                       Save the job in /hpc-home/telatina/slurm//jobs (default: STDOUT)
    -r, --run                    Save AND run the job (default: print to STDOUT)
