@@ -55,7 +55,7 @@ If you want to store your e-mail address as default recipient, simply type the e
  ------------------------------------------------------------------------------------
 ```
 
-### Example
+### Examples
 
  - To view the script:
 
@@ -65,6 +65,23 @@ If you want to store your e-mail address as default recipient, simply type the e
 
 `sb.pl -c 6 -h 8 -s samtools-1.5  --run "samtools view -bS aln.sam | samtools sort -@ 6 -o aln.bam -"`
 
+#### To specify requested time
+Use the -d DAYS -h HOURS switces
+
+#### To use a conda environment
+Place a 'conda_source' file in your home, then use the `--conda` to source it, and finally `-s ENV` to require a specific environmenet
+
+#### To use software installed as modules
+Generally use as many `-s MODULE` switches as needed, they'll be taken from NBI catalogue. Also add `--ei` to switch to EI catalogue
+
+
+### Logs
+
+By default every script is saved in `~/slurm/jobs` and STDOUT/STDERR files in `~/slurm/logs`.
+
+To search these files knowing the jobname:
+
+`sb.pl --search JOBNAME`
 
 	
 ### Author
