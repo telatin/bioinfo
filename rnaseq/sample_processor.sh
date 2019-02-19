@@ -6,6 +6,7 @@ this_script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )";
 tools_dir="$this_script_path/tools_sample_processor"
 opt_help=0;
 threads=4;
+opt_ref="~/db/";
 outdir='processed_sample';
 
 ### CHECK DEPENDENCIES
@@ -26,13 +27,14 @@ done
 echo " * External commands found"
 
 ### GET ARGUMENTS
-while getopts t:o:h option
+while getopts t:o:r:h option
 do
         case "${option}"
                 in
                         t) threads=${OPTARG};;
                         o) outdir=${OPTARG};;
                         h) opt_help=1;;
+                        r) opt_ref=${OPTARG};;
                         ?) echo " Wrong parameter $OPTARG";;
          esac
 done
@@ -46,6 +48,11 @@ $(basename $0) [options] FirstPair.fq [SecondPair.fq]
   -h         Show this message [$opt_help]
 ";
 exit;
+fi
+
+if [ ! -e "$opt_ref" ]; then
+    echo " FATAL ERROR: Unable to locate reference file <$opt_ref>"
+    exit 8
 fi
 
 ### FILE R1 AND R2 VALIDATION
@@ -86,14 +93,20 @@ else
     mkdir -p "$outdir"
 fi
 
+
 CMD1="${tools_dir}/merge-paired-reads.sh \"$FILE1\" \"$FILE2\" \"$outdir\"/\"${BASE}.interleaved.fastq\"";
 ID1=`sb.pl --cores 1 --name $BASE.1 --run "$CMD1"`
 ID1=$(echo $ID1 | cut -f2 -d:)
+    # check output
 
 CMD2="${tools_dir}/sortmerna.sh \"$outdir\"/\"${BASE}.interleaved.fastq\" \"$outdir/\" ";
 ID2=`sb.pl --cores 4 --name $BASE.2 --after $ID1 --run "$CMD2"`
 ID2=$(echo $ID2 | cut -f2 -d:)
+    # check output
 
-
+CMD3="${tools_dir}/deinterleave.sh < \"$outdir/\"\"${BASE}.nonrRNA.fastq\" \"$outdir\"/\"${BASE}_R1.fastq.gz\" \"$outdir\"/\"${BASE}_R2.fastq.gz\" compress"
+ID3=`sb.pl --cores 8 --name $BASE.3 --after $ID2 --run "$CMD3"`
+ID3=$(echo $ID3 | cut -f2 -d:)
+    # check output
 
 
