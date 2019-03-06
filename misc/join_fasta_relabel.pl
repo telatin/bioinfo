@@ -1,5 +1,11 @@
 #!/usr/bin/env perl -w
 
+# A script to join multiple fasta files in a single one, prepending to each sequence
+# name a prefix based on the filename. Some options to customize it are provided:
+#  --basename to strip the relative/absolute path provided to the program
+#  --split to keep the first part of the filename before a string (e.g. "_")
+#  --joinpathchar to substitute the "/" in the path with a different char
+
 use v5.16;
 use Getopt::Long;
 use Data::Dumper;
