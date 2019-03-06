@@ -15,9 +15,11 @@ my ($opt_cite,
 	$opt_version, 
 	$opt_debug,
 	$opt_data,
+	$opt_info,
 	);
 my $opt_outdir =  "./";
 my $result = GetOptions(
+	'i|info'      => \$opt_info,
 	'd|data'      => \$opt_data,
 	'c|cite:s'    => \$opt_cite,
  	'x|extract:s' => \$opt_outdir,
@@ -42,6 +44,8 @@ if (defined $opt_cite) {
 	} else {
 		say "$citation";
 	}
+	say STDERR "Warning: --cite will exclude any other action\n" if ($opt_outdir or $opt_info);
+	exit;
 }
 
 if (defined $opt_outdir) {
@@ -84,6 +88,20 @@ if (defined $opt_outdir) {
 	}
 	
 }
+
+if ($opt_info) {
+	say "File: $opt_filename";
+	say "UUID: ", $artifact->{id};
+	say "Type: ", $artifact->{type};
+	say "Form: ", $artifact->{format};
+
+	print "Data: \n - ";
+	  say join("\n - " , @{ $artifact->{data} });
+
+
+	print "Parents: \n - ";
+	  say join("\n - " , keys %{ $artifact->{parents} });
+}	
 
 
 
@@ -237,6 +255,9 @@ Print the list of files in the 'data' directory.
 If a OUTDIR is provided, extract the content of the 'data' directory (i.e. the actual output of the artifact).
 Will create the directory if not found. Will overwrite files in the directory.
 
+B<-i, --info>
+
+Will print informations on the artifact.
 
  
 =back
