@@ -70,8 +70,13 @@ if (defined $opt_help or !defined $opt_inputfile) {
 
 # Read from STDIN if "-i -"
 if ($opt_inputfile ne '-') {
-	open STDIN, '<', "$opt_inputfile" || die "FATAL ERROR:\nUnable to read input file <$opt_inputfile>.\n";
+	if (-e "$opt_inputfile") {
+		open STDIN, '<', "$opt_inputfile" || die "FATAL ERROR:\nUnable to read input file <$opt_inputfile>.\n";
+	} else {
+		die "FATAL ERROR:\nInput file <$opt_inputfile> not found.\n";
+	}
 }
+
 $opt_pattern = uc($opt_pattern);
 my $opt_revpattern = rc($opt_pattern);
 
@@ -90,11 +95,17 @@ if ($opt_verbose) {
 	foreach my $enzyme (@opt_enzymes) {
 		$enzyme = uc($enzyme);
 		my $dna_pattern = $re_site{$enzyme};
-		die "FATAL ERROR: Enzyme '$enzyme' not found\n" unless ($dna_pattern);
 		say STDERR " - $enzyme ($dna_pattern)";
 	}
 
 	say STDERR "";
+}
+
+# Check provided enzymes are present in the script db
+foreach my $enzyme (@opt_enzymes) {
+		$enzyme = uc($enzyme);
+		my $dna_pattern = $re_site{$enzyme};
+		die "FATAL ERROR: Enzyme '$enzyme' not found\n" unless ($dna_pattern);
 }
 my @aux = undef;
 my ($name, $seq);
