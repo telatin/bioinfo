@@ -42,295 +42,300 @@ sub usage {
       grep.pl -i file.fa -p GATTACA -r -e ecori -e bamhi > insert.fa
 
 END
-	exit;
+    exit;
 }
 
-my (
-		$opt_inputfile,
-		$opt_pattern,
-		$opt_verbose,
-		$opt_rotate,
-		$opt_help,
-);
+my ( $opt_inputfile, $opt_pattern, $opt_verbose, $opt_rotate, $opt_help, );
 my @opt_enzymes = ();
 
 my $GetOptions = GetOptions(
-	'i|input=s'         => \$opt_inputfile,
-	'p|pattern=s'       => \$opt_pattern,
-	'v|verbose'         => \$opt_verbose,
-	'e|enzyme=s'        => \@opt_enzymes,
-	'rotate'            => \$opt_rotate,
-	'h|help'            => \$opt_help,
+    'i|input=s'   => \$opt_inputfile,
+    'p|pattern=s' => \$opt_pattern,
+    'v|verbose'   => \$opt_verbose,
+    'e|enzyme=s'  => \@opt_enzymes,
+    'rotate'      => \$opt_rotate,
+    'h|help'      => \$opt_help,
 );
 
 # Essential parameters (-i, -p)
-if (defined $opt_help or !defined $opt_inputfile) {
-	usage();
+if ( defined $opt_help or !defined $opt_inputfile ) {
+    usage();
 }
 
 # Read from STDIN if "-i -"
-if ($opt_inputfile ne '-') {
-	if (-e "$opt_inputfile") {
-		open STDIN, '<', "$opt_inputfile" || die "FATAL ERROR:\nUnable to read input file <$opt_inputfile>.\n";
-	} else {
-		die "FATAL ERROR:\nInput file <$opt_inputfile> not found.\n";
-	}
+if ( $opt_inputfile ne '-' ) {
+    if ( -e "$opt_inputfile" ) {
+        open STDIN, '<', "$opt_inputfile"
+          || die "FATAL ERROR:\nUnable to read input file <$opt_inputfile>.\n";
+    }
+    else {
+        die "FATAL ERROR:\nInput file <$opt_inputfile> not found.\n";
+    }
 }
 
 $opt_pattern = uc($opt_pattern);
 my $opt_revpattern = rc($opt_pattern);
 
-$opt_pattern = dna_to_regex($opt_pattern);
+$opt_pattern    = dna_to_regex($opt_pattern);
 $opt_revpattern = dna_to_regex($opt_revpattern);
 
 # Load Restriction enzyme DNA sites
 our %re_site = re_init();
 
-
 if ($opt_verbose) {
-	say STDERR "Scanning $opt_inputfile for:\n",
-	" - $opt_pattern (+)\n - $opt_revpattern (-)";
+    say STDERR "Scanning $opt_inputfile for:\n",
+      " - $opt_pattern (+)\n - $opt_revpattern (-)";
 
-	say STDERR "Enzymes:"; 
-	foreach my $enzyme (@opt_enzymes) {
-		$enzyme = uc($enzyme);
-		my $dna_pattern = $re_site{$enzyme};
-		say STDERR " - $enzyme ($dna_pattern)";
-	}
+    say STDERR "Enzymes:";
+    foreach my $enzyme (@opt_enzymes) {
+        $enzyme = uc($enzyme);
+        my $dna_pattern = $re_site{$enzyme};
+        say STDERR " - $enzyme ($dna_pattern)";
+    }
 
-	say STDERR "";
+    say STDERR "";
 }
 
 # Check provided enzymes are present in the script db
 foreach my $enzyme (@opt_enzymes) {
-		$enzyme = uc($enzyme);
-		my $dna_pattern = $re_site{$enzyme};
-		die "FATAL ERROR: Enzyme '$enzyme' not found\n" unless ($dna_pattern);
+    $enzyme = uc($enzyme);
+    my $dna_pattern = $re_site{$enzyme};
+    die "FATAL ERROR: Enzyme '$enzyme' not found\n" unless ($dna_pattern);
 }
+
 my @aux = undef;
-my ($name, $seq);
+my ( $name, $seq );
 my $comment = '';
 
 my %count_matches;
 
-while (($name,$comment, $seq, ) = readfq(\*STDIN, \@aux)) {
-	my $seq_len = length($seq);
+while ( ( $name, $comment, $seq, ) = readfq( \*STDIN, \@aux ) ) {
+    my $seq_len = length($seq);
 
-	if ($opt_verbose) {
-		say STDERR "Parsing $name...";
-	}
+    if ($opt_verbose) {
+        say STDERR "Parsing $name...";
+    }
 
-	my @pos     = ();
-	my @str     = ();
-	my $matches =  0;
+    my @pos     = ();
+    my @str     = ();
+    my $matches = 0;
 
-	while ($seq=~/($opt_pattern|$opt_revpattern)/ig) {
-		my $m = $1;
-		$matches++;
-		my $strand = '+';
-		$strand = '-' if ($m=~/$opt_revpattern/i);
+    while ( $seq =~ /($opt_pattern|$opt_revpattern)/ig ) {
+        my $m = $1;
+        $matches++;
+        my $strand = '+';
+        $strand = '-' if ( $m =~ /$opt_revpattern/i );
 
-		my $end = pos($seq) + 1;
-		my $start = $end - length($opt_pattern);
+        my $end   = pos($seq) + 1;
+        my $start = $end - length($opt_pattern);
 
-		say STDERR " - match at ${start}-${end} ($strand)" if ($opt_verbose);
-		$count_matches{$seq}++;
-		push(@pos, $start);
-		push(@str, $strand);
-	}
-	my $print_seq = $seq;
-	$comment = ' '. $comment if (length($comment));
-	if ($opt_rotate) {
-		if ($matches == 1) {
-			# If there is only a match
-			say STDERR "#$name:$pos[0]:$str[0]";
+        say STDERR " - match at ${start}-${end} ($strand)" if ($opt_verbose);
+        $count_matches{$seq}++;
+        push( @pos, $start );
+        push( @str, $strand );
+    }
+    my $print_seq = $seq;
+    $comment = ' ' . $comment if ( length($comment) );
+    if ($opt_rotate) {
+        if ( $matches == 1 ) {
 
-			
-			$print_seq = rotate_seq($print_seq, $pos[0]);
-			if ($str[0] eq '-') {
-				$print_seq = rc($print_seq);
-				$print_seq = substr($print_seq, -1*length($opt_pattern)) . substr($print_seq, 0, -1*length($opt_pattern));
-			}
+            # If there is only a match
+            say STDERR "#$name:$pos[0]:$str[0]";
 
+            $print_seq = rotate_seq( $print_seq, $pos[0] );
+            if ( $str[0] eq '-' ) {
+                $print_seq = rc($print_seq);
+                $print_seq = substr( $print_seq, -1 * length($opt_pattern) )
+                  . substr( $print_seq, 0, -1 * length($opt_pattern) );
+            }
 
-			
-			
+            # ALTERNATIVE:
+            #seqkit grep -s -p '$name $comment'
+            #seqkit seq --complement ...
+            #seqkit restart -i $pos[0] ...
+        }
+        else {
+            say STDERR
+              "Multiple matches ($matches) found. Cannot rotate \"$name\"";
+        }
+    }
 
+    if ( defined $opt_enzymes[1] ) {
+        my $cutting_1 = $re_site{ uc( $opt_enzymes[0] ) };
+        my $cutting_2 = $re_site{ uc( $opt_enzymes[1] ) };
+        $cutting_1 =~ s/[^ACGT]//g;
+        $cutting_2 =~ s/[^ACGT]//g;
+        my @ins           = ();
+        my @feat          = ();
+        my $inserts_count = 0;
+        say STDERR
+"Looking for inserts $opt_enzymes[0]:$opt_enzymes[1] ($cutting_1:$cutting_2)"
+          if ( defined $opt_verbose );
 
-			# ALTERNATIVE:
-			#seqkit grep -s -p '$name $comment'
-			#seqkit seq --complement ... 
-			#seqkit restart -i $pos[0] ...
-		} else {
-			say STDERR "Multiple matches ($matches) found. Cannot rotate \"$name\"";
-		}
-	}
-
-	if (defined $opt_enzymes[1]) {
-		my $cutting_1 = $re_site{uc($opt_enzymes[0])};
-		my $cutting_2 = $re_site{uc($opt_enzymes[1])};
-		$cutting_1 =~s/[^ACGT]//g;
-		$cutting_2 =~s/[^ACGT]//g;
-		my @ins = ();
-		my @feat = ();
-		my $inserts_count = 0;
-		say STDERR "Looking for inserts $opt_enzymes[0]:$opt_enzymes[1] ($cutting_1:$cutting_2)" if (defined $opt_verbose);
-		while ($print_seq=~/${cutting_1}(.+)${cutting_2}/ig) {
-			my $pos = pos($print_seq) + 1;
-			push(@ins, $1);
-			push(@feat, "+ $opt_enzymes[0]:$opt_enzymes[1] at $pos");
-			$inserts_count++;
-			if (defined $opt_verbose) {
-				say STDERR " - Insert found ", length($1), "bp"; 
-			}
-		}
-		say STDERR "Looking for inserts $opt_enzymes[1]:$opt_enzymes[0] ($cutting_2:$cutting_1)" if (defined $opt_verbose);
-		while ($print_seq=~/${cutting_2}(.+)${cutting_1}/ig) {
-			my $pos = pos($print_seq) + 1;
-			push(@ins, $1);
-			push(@feat, "- $opt_enzymes[1]:$opt_enzymes[0] at $pos");
-			$inserts_count++;
-			if (defined $opt_verbose) {
-				say STDERR " - Insert found ", length($1), "bp"; 
-			}
-		}
-		if (defined $opt_verbose) {
-			say STDERR " - $inserts_count inserts found";
-		}
-		if ($inserts_count == 1) {
-			my $len = length($ins[0]);
-			my $bone_len = $seq_len - $len;
-			say ">$name$comment [$feat[0]] plasmid=$bone_len;insert=$len;";
-			say "$ins[0]";
-		}
-		} else {
-		say ">$name$comment\n$print_seq\n";
-	}
+        while ( $print_seq =~ /${cutting_1}(.+)${cutting_2}/ig ) {
+            my $pos = pos($print_seq) + 1;
+            push( @ins,  $1 );
+            push( @feat, "+ $opt_enzymes[0]:$opt_enzymes[1] at $pos" );
+            $inserts_count++;
+            if ( defined $opt_verbose ) {
+                say STDERR " - Insert found ", length($1), "bp";
+            }
+        }
+        say STDERR
+"Looking for inserts $opt_enzymes[1]:$opt_enzymes[0] ($cutting_2:$cutting_1)"
+          if ( defined $opt_verbose );
+        while ( $print_seq =~ /${cutting_2}(.+)${cutting_1}/ig ) {
+            my $pos = pos($print_seq) + 1;
+            push( @ins,  $1 );
+            push( @feat, "- $opt_enzymes[1]:$opt_enzymes[0] at $pos" );
+            $inserts_count++;
+            if ( defined $opt_verbose ) {
+                say STDERR " - Insert found ", length($1), "bp";
+            }
+        }
+        if ( defined $opt_verbose ) {
+            say STDERR " - $inserts_count inserts found";
+        }
+        if ( $inserts_count == 1 ) {
+            my $len      = length( $ins[0] );
+            my $bone_len = $seq_len - $len;
+            say ">$name$comment [$feat[0]] plasmid=$bone_len;insert=$len;";
+            say "$ins[0]";
+        }
+    }
+    else {
+        say ">$name$comment\n$print_seq\n";
+    }
 }
 
 my $seqs_number = keys %count_matches;
 say STDERR "$seqs_number sequences parsed";
 
 sub get_pos {
-	my ($seq, $pattern) = @_;
+    my ( $seq, $pattern ) = @_;
 
-	$pattern = uc($pattern);
-	$pattern=~s/[^ACGT]//g;
+    $pattern = uc($pattern);
+    $pattern =~ s/[^ACGT]//g;
 
-	if ($seq=~/$pattern/) {
-		my $p = $-[0] + 1;
-		return $p;
-	} else {
-		return 0;
-	}
+    if ( $seq =~ /$pattern/ ) {
+        my $p = $-[0] + 1;
+        return $p;
+    }
+    else {
+        return 0;
+    }
 }
 
 sub count_matches {
-	my ($string, $pattern) = @_;
-	my $number = () = $string =~ /$pattern/gi;
-	return $number;
+    my ( $string, $pattern ) = @_;
+    my $number = () = $string =~ /$pattern/gi;
+    return $number;
 }
 
 sub rotate_seq {
-	my ($seq, $position) = @_;
-	$position--;
-	my $start = substr($seq, 0, $position);
-	my $end   = substr($seq, $position);
-	return $end.$start;
+    my ( $seq, $position ) = @_;
+    $position--;
+    my $start = substr( $seq, 0, $position );
+    my $end = substr( $seq, $position );
+    return $end . $start;
 }
+
 sub rc {
-	my ($sequence) = @_;
-	if ($sequence=~/[^ACGTN]/i) {
-		return 0;
-	}
-	$sequence = reverse($sequence);
-	$sequence =~tr/acgtACGT/tgcaTGCA/; 
-	return $sequence;
+    my ($sequence) = @_;
+    if ( $sequence =~ /[^ACGTN]/i ) {
+        return 0;
+    }
+    $sequence = reverse($sequence);
+    $sequence =~ tr/acgtACGT/tgcaTGCA/;
+    return $sequence;
 }
 
 sub dna_to_regex {
-	my $dna = shift @_;
-	$dna = uc($dna);
-	my %replacements = (
-		'R'      => '[AG]',
-		'Y'      => '[CT]',
-		'S'      => '[GC]',
-		'W'      => '[AT]',
-		'K'      => '[GT]',
-		'M'      => '[AC]',
-		'B'      => '[CGT]',
-		'D'      => '[AGT]',
-		'H'      => '[ACT]',
-		'V'      => '[ACG]',
-		'N'      => '[ACGT]',
-	);
+    my $dna = shift @_;
+    $dna = uc($dna);
+    my %replacements = (
+        'R' => '[AG]',
+        'Y' => '[CT]',
+        'S' => '[GC]',
+        'W' => '[AT]',
+        'K' => '[GT]',
+        'M' => '[AC]',
+        'B' => '[CGT]',
+        'D' => '[AGT]',
+        'H' => '[ACT]',
+        'V' => '[ACG]',
+        'N' => '[ACGT]',
+    );
 
-	for my $r (keys %replacements) {
-		$dna =~s/$r/$replacements{$r}/g;
-	}
-	return $dna;
+    for my $r ( keys %replacements ) {
+        $dna =~ s/$r/$replacements{$r}/g;
+    }
+    return $dna;
 }
+
 sub readfq {
-    my ($fh, $aux) = @_;
-    @$aux = [undef, 0] if (!@$aux);
-    return if ($aux->[1]);
-    if (!defined($aux->[0])) {
+    my ( $fh, $aux ) = @_;
+    @$aux = [ undef, 0 ] if ( !@$aux );
+    return if ( $aux->[1] );
+    if ( !defined( $aux->[0] ) ) {
         while (<$fh>) {
             chomp;
-            if (substr($_, 0, 1) eq '>' || substr($_, 0, 1) eq '@') {
+            if ( substr( $_, 0, 1 ) eq '>' || substr( $_, 0, 1 ) eq '@' ) {
                 $aux->[0] = $_;
                 last;
             }
         }
-        if (!defined($aux->[0])) {
+        if ( !defined( $aux->[0] ) ) {
             $aux->[1] = 1;
             return;
         }
     }
-    my ($name, $comm) = /^.(\S+)(?:\s+)(.+)/ ? ($1, $2) : 
-                        /^.(\S+)/ ? ($1, '') : ('', '');
+    my ( $name, $comm ) =
+        /^.(\S+)(?:\s+)(.+)/ ? ( $1, $2 )
+      : /^.(\S+)/            ? ( $1, '' )
+      :                        ( '', '' );
     my $seq = '';
     my $c;
     $aux->[0] = undef;
     while (<$fh>) {
         chomp;
-        $c = substr($_, 0, 1);
-        last if ($c eq '>' || $c eq '@' || $c eq '+');
+        $c = substr( $_, 0, 1 );
+        last if ( $c eq '>' || $c eq '@' || $c eq '+' );
         $seq .= $_;
     }
     $aux->[0] = $_;
-    $aux->[1] = 1 if (!defined($aux->[0]));
-    return ($name, $comm, $seq) if ($c ne '+');
+    $aux->[1] = 1 if ( !defined( $aux->[0] ) );
+    return ( $name, $comm, $seq ) if ( $c ne '+' );
     my $qual = '';
     while (<$fh>) {
         chomp;
         $qual .= $_;
-        if (length($qual) >= length($seq)) {
+        if ( length($qual) >= length($seq) ) {
             $aux->[0] = undef;
-            return ($name, $comm, $seq, $qual);
+            return ( $name, $comm, $seq, $qual );
         }
     }
     $aux->[1] = 1;
-    return ($name, $seq);
+    return ( $name, $seq );
 }
-
 
 sub re_init {
-	my $re_list = re_load();
-	my @l = split /\n/, $re_list;
-	my %dna;
-	foreach my $e (@l) {
-     chomp($e);
-     my ($name, $site) = split /\s+/, $e;
-     next unless (defined $site);
-     $name = uc($name);
-     
-     $dna{$name} = $site;
-	}
-	return %dna;
+    my $re_list = re_load();
+    my @l = split /\n/, $re_list;
+    my %dna;
+    foreach my $e (@l) {
+        chomp($e);
+        my ( $name, $site ) = split /\s+/, $e;
+        next unless ( defined $site );
+        $name = uc($name);
+
+        $dna{$name} = $site;
+    }
+    return %dna;
 }
+
 sub re_load {
-return '
+    return '
 HindIII A/AGCTT
 Psp1406I    AA/CGTT
 SspI    AAT/ATT
@@ -496,5 +501,5 @@ EcopP15i    CAG/CAG
 Tru9I   T/TAA
 Nick    CCTCAGC
 '
-;
+      ;
 }
