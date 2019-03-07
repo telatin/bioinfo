@@ -1,10 +1,10 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
 
 use v5.16;
 use Getopt::Long;
 use Data::Dumper;
 
-our $VERSION = '0.10';
+our $VERSION = '0.15';
 
 sub usage {
     my $line = '-' x 60;
@@ -64,7 +64,7 @@ my $GetOptions = GetOptions(
 );
 
 # Essential parameters (-i, -p)
-if (defined $opt_help or !defined $opt_inputfile or !defined $opt_pattern) {
+if (defined $opt_help or !defined $opt_inputfile) {
 	usage();
 }
 
@@ -127,17 +127,33 @@ while (($name,$comment, $seq, ) = readfq(\*STDIN, \@aux)) {
 		push(@pos, $start);
 		push(@str, $strand);
 	}
-
+	my $print_seq = $seq;
+	$comment = ' '. $comment if (length($comment));
 	if ($opt_rotate) {
 		if ($matches == 1) {
 			# If there is only a match
 			say STDERR "#$name:$pos[0]:$str[0]";
 
-			my $print_seq = $seq;
-			$print_seq = rotate_seq($print_seq, $pos[0]);
-			$print_seq = rc($print_seq) if ($str[0] eq '-');
-			$comment = ' '. $comment if (length($comment));
 			
+			$print_seq = rotate_seq($print_seq, $pos[0]);
+			if ($str[0] eq '-') {
+				$print_seq = rc($print_seq);
+				$print_seq = substr($print_seq, -1*length($opt_pattern)) . substr($print_seq, 0, -1*length($opt_pattern));
+			}
+
+
+			
+			
+
+
+			# ALTERNATIVE:
+			#seqkit grep -s -p '$name $comment'
+			#seqkit seq --complement ... 
+			#seqkit restart -i $pos[0] ...
+		} else {
+			say STDERR "Multiple matches ($matches) found. Cannot rotate \"$name\"";
+		}
+
 
 			if (defined $opt_enzymes[1]) {
 				my $cutting_1 = $re_site{uc($opt_enzymes[0])};
@@ -148,20 +164,20 @@ while (($name,$comment, $seq, ) = readfq(\*STDIN, \@aux)) {
 				my @feat = ();
 				my $inserts_count = 0;
 				say STDERR "Looking for inserts $opt_enzymes[0]:$opt_enzymes[1] ($cutting_1:$cutting_2)" if (defined $opt_verbose);
-				while ($print_seq=~/${cutting_1}(.+)${cutting_2}/g) {
+				while ($print_seq=~/${cutting_1}(.+)${cutting_2}/ig) {
 					my $pos = pos($print_seq) + 1;
 					push(@ins, $1);
-					push(@feat, "(+) $opt_enzymes[0]:$opt_enzymes[1] at $pos");
+					push(@feat, "+ $opt_enzymes[0]:$opt_enzymes[1] at $pos");
 					$inserts_count++;
 					if (defined $opt_verbose) {
 						say STDERR " - Insert found ", length($1), "bp"; 
 					}
 				}
 				say STDERR "Looking for inserts $opt_enzymes[1]:$opt_enzymes[0] ($cutting_2:$cutting_1)" if (defined $opt_verbose);
-				while ($print_seq=~/${cutting_2}(.+)${cutting_1}/g) {
+				while ($print_seq=~/${cutting_2}(.+)${cutting_1}/ig) {
 					my $pos = pos($print_seq) + 1;
 					push(@ins, $1);
-					push(@feat, "(-) $opt_enzymes[1]:$opt_enzymes[0] at $pos");
+					push(@feat, "- $opt_enzymes[1]:$opt_enzymes[0] at $pos");
 					$inserts_count++;
 					if (defined $opt_verbose) {
 						say STDERR " - Insert found ", length($1), "bp"; 
@@ -173,27 +189,17 @@ while (($name,$comment, $seq, ) = readfq(\*STDIN, \@aux)) {
 				if ($inserts_count == 1) {
 					my $len = length($ins[0]);
 					my $bone_len = $seq_len - $len;
-					say ">$name$comment [$opt_enzymes[0]-$opt_enzymes[1]: $cutting_1-$cutting_2] plasmid=$bone_len;insert=$len;";
+					say ">$name$comment [$feat[0]] plasmid=$bone_len;insert=$len;";
 					say "$ins[0]";
 				}
-				# my $site1 = get_pos( $print_seq, $re_site{uc($opt_enzymes[0])} );
-				# my $site2 = get_pos( $print_seq, $re_site{uc($opt_enzymes[1])} );
-				# my $len = $site2 - $site1 + 1;
-				# my $bone_len = $seq_len - $len;
-				# say STDERR "Restriction $opt_enzymes[0]-$opt_enzymes[1]: $site1-$site2 ($len)";
 
-				# say ">$name$comment [$opt_enzymes[0]-$opt_enzymes[1]: $site1-$site2] plasmid=$bone_len;insert=$len;";
-				# say substr($print_seq, $site1, $len);
 			} else {
 				say ">$name$comment\n$print_seq\n";
 			}
-			# ALTERNATIVE:
-			#seqkit grep -s -p '$name $comment'
-			#seqkit seq --complement ... 
-			#seqkit restart -i $pos[0] ...
-		} else {
-			say STDERR "Multiple matches ($matches) found. Cannot rotate";
-		}
+
+
+
+
 	}
 
 
