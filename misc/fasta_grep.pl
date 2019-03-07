@@ -1,3 +1,4 @@
+
 #!/usr/bin/env perl -w
 
 use v5.16;
@@ -5,6 +6,45 @@ use Getopt::Long;
 use Data::Dumper;
 
 our $VERSION = '0.10';
+
+sub usage {
+    my $line = '-' x 60;
+    say STDERR<<END;
+
+    PLASMID GREP v. $VERSION
+    ${line}
+
+	-i, --input FILE
+	                  Input file in FASTA/FASTQ format
+
+	-p, --pattern STRING
+	                  DNA pattern to locate. IUPAC allowed.
+
+	-r, --rotate 
+	                  Makes the plasmid start where the pattern
+	                  is found, if the pattern is unique
+
+	-e, --enzyme STRING
+	                  Restriction enzyme name (e.g. EcoRI).
+	                  Invoke the parameter twice for slicing
+	                  the insert. Assumes unique restriction site.
+
+    This program should be used with a single sequence in the 
+    FASTX file, but multiple are allowed. For each sequence will
+    check the presence of the pattern.
+    If a single instance of the pattern is found, the sequence
+    can be rotated/reversed as needed.
+
+    Will print SEQ_NAME:POSITION:STRAND for each sequence having
+    a unique hit.
+
+    Examples:
+      grep.pl -i file.fa -p GATTACA -r > restarted.fa
+      grep.pl -i file.fa -p GATTACA -r -e ecori -e bamhi > insert.fa
+
+END
+	exit;
+}
 
 my (
 		$opt_inputfile,
@@ -106,10 +146,13 @@ while (($name,$comment, $seq, ) = readfq(\*STDIN, \@aux)) {
 				$cutting_1 =~s/[^ACGT]//g;
 				$cutting_2 =~s/[^ACGT]//g;
 				my @ins = ();
+				my @feat = ();
 				my $inserts_count = 0;
 				say STDERR "Looking for inserts $opt_enzymes[0]:$opt_enzymes[1] ($cutting_1:$cutting_2)" if (defined $opt_verbose);
 				while ($print_seq=~/${cutting_1}(.+)${cutting_2}/g) {
+					my $pos = pos($print_seq) + 1;
 					push(@ins, $1);
+					push(@feat, "(+) $opt_enzymes[0]:$opt_enzymes[1] at $pos");
 					$inserts_count++;
 					if (defined $opt_verbose) {
 						say STDERR " - Insert found ", length($1), "bp"; 
@@ -117,7 +160,9 @@ while (($name,$comment, $seq, ) = readfq(\*STDIN, \@aux)) {
 				}
 				say STDERR "Looking for inserts $opt_enzymes[1]:$opt_enzymes[0] ($cutting_2:$cutting_1)" if (defined $opt_verbose);
 				while ($print_seq=~/${cutting_2}(.+)${cutting_1}/g) {
+					my $pos = pos($print_seq) + 1;
 					push(@ins, $1);
+					push(@feat, "(-) $opt_enzymes[1]:$opt_enzymes[0] at $pos");
 					$inserts_count++;
 					if (defined $opt_verbose) {
 						say STDERR " - Insert found ", length($1), "bp"; 
@@ -170,45 +215,6 @@ sub get_pos {
 	} else {
 		return 0;
 	}
-}
-sub usage {
-	my $line = '-' x 60;
-	say STDERR<<END;
-
-    PLASMID GREP v. $VERSION
-    ${line}
-
-	-i, --input FILE
-	                  Input file in FASTA/FASTQ format
-
-	-p, --pattern STRING
-	                  DNA pattern to locate. IUPAC allowed.
-
-	-r, --rotate 
-	                  Uses 'seqkit' to make the plasmid start
-	                  where the pattern is found, if the pattern
-	                  is unique (experimental)
-
-	-e, --enzyme STRING
-	                  Restriction enzyme name (e.g. EcoRI).
-	                  Invoke the parameter twice for slicing
-	                  the insert. Assumes unique restriction site.
-
-    This program should be used with a single sequence in the 
-    FASTX file, but multiple are allowed. For each sequence will
-    check the presence of the pattern.
-    If a single instance of the pattern is found, the sequence
-    can be rotated/reversed as needed.
-
-    Will print SEQ_NAME:POSITION:STRAND for each sequence having
-    a unique hit.
-
-    Examples:
-      grep.pl -i file.fa -p GATTACA -r > restarted.fa
-      grep.pl -i file.fa -p GATTACA -r -e ecori -e bamhi > insert.fa
-
-END
-	exit;
 }
 
 sub count_matches {
