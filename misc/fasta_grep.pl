@@ -164,56 +164,48 @@ while (($name,$comment, $seq, ) = readfq(\*STDIN, \@aux)) {
 		} else {
 			say STDERR "Multiple matches ($matches) found. Cannot rotate \"$name\"";
 		}
-
-
-			if (defined $opt_enzymes[1]) {
-				my $cutting_1 = $re_site{uc($opt_enzymes[0])};
-				my $cutting_2 = $re_site{uc($opt_enzymes[1])};
-				$cutting_1 =~s/[^ACGT]//g;
-				$cutting_2 =~s/[^ACGT]//g;
-				my @ins = ();
-				my @feat = ();
-				my $inserts_count = 0;
-				say STDERR "Looking for inserts $opt_enzymes[0]:$opt_enzymes[1] ($cutting_1:$cutting_2)" if (defined $opt_verbose);
-				while ($print_seq=~/${cutting_1}(.+)${cutting_2}/ig) {
-					my $pos = pos($print_seq) + 1;
-					push(@ins, $1);
-					push(@feat, "+ $opt_enzymes[0]:$opt_enzymes[1] at $pos");
-					$inserts_count++;
-					if (defined $opt_verbose) {
-						say STDERR " - Insert found ", length($1), "bp"; 
-					}
-				}
-				say STDERR "Looking for inserts $opt_enzymes[1]:$opt_enzymes[0] ($cutting_2:$cutting_1)" if (defined $opt_verbose);
-				while ($print_seq=~/${cutting_2}(.+)${cutting_1}/ig) {
-					my $pos = pos($print_seq) + 1;
-					push(@ins, $1);
-					push(@feat, "- $opt_enzymes[1]:$opt_enzymes[0] at $pos");
-					$inserts_count++;
-					if (defined $opt_verbose) {
-						say STDERR " - Insert found ", length($1), "bp"; 
-					}
-				}
-				if (defined $opt_verbose) {
-					say STDERR " - $inserts_count inserts found";
-				}
-				if ($inserts_count == 1) {
-					my $len = length($ins[0]);
-					my $bone_len = $seq_len - $len;
-					say ">$name$comment [$feat[0]] plasmid=$bone_len;insert=$len;";
-					say "$ins[0]";
-				}
-
-			} else {
-				say ">$name$comment\n$print_seq\n";
-			}
-
-
-
-
 	}
 
-
+	if (defined $opt_enzymes[1]) {
+		my $cutting_1 = $re_site{uc($opt_enzymes[0])};
+		my $cutting_2 = $re_site{uc($opt_enzymes[1])};
+		$cutting_1 =~s/[^ACGT]//g;
+		$cutting_2 =~s/[^ACGT]//g;
+		my @ins = ();
+		my @feat = ();
+		my $inserts_count = 0;
+		say STDERR "Looking for inserts $opt_enzymes[0]:$opt_enzymes[1] ($cutting_1:$cutting_2)" if (defined $opt_verbose);
+		while ($print_seq=~/${cutting_1}(.+)${cutting_2}/ig) {
+			my $pos = pos($print_seq) + 1;
+			push(@ins, $1);
+			push(@feat, "+ $opt_enzymes[0]:$opt_enzymes[1] at $pos");
+			$inserts_count++;
+			if (defined $opt_verbose) {
+				say STDERR " - Insert found ", length($1), "bp"; 
+			}
+		}
+		say STDERR "Looking for inserts $opt_enzymes[1]:$opt_enzymes[0] ($cutting_2:$cutting_1)" if (defined $opt_verbose);
+		while ($print_seq=~/${cutting_2}(.+)${cutting_1}/ig) {
+			my $pos = pos($print_seq) + 1;
+			push(@ins, $1);
+			push(@feat, "- $opt_enzymes[1]:$opt_enzymes[0] at $pos");
+			$inserts_count++;
+			if (defined $opt_verbose) {
+				say STDERR " - Insert found ", length($1), "bp"; 
+			}
+		}
+		if (defined $opt_verbose) {
+			say STDERR " - $inserts_count inserts found";
+		}
+		if ($inserts_count == 1) {
+			my $len = length($ins[0]);
+			my $bone_len = $seq_len - $len;
+			say ">$name$comment [$feat[0]] plasmid=$bone_len;insert=$len;";
+			say "$ins[0]";
+		}
+		} else {
+		say ">$name$comment\n$print_seq\n";
+	}
 }
 
 my $seqs_number = keys %count_matches;
