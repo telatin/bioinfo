@@ -1,11 +1,15 @@
 #!/usr/bin/perl
 use Getopt::Long;
 
-$SIG{INT} = sub { print "Received SIGINT\n"; $last = 1; };
+$SIG{INT} = sub { 
+	print "Received SIGINT\n"; 
+	$last = 1; 
+};
+
 print STDERR "
-  +---------------------------------------------------------------------+
-  | The Fastq Quality Filter v 1.06DE         A. Telatin 2012 (C) CRIBI |
-  +---------------------------------------------------------------------+
+  +------------------------------------------------------------+
+  | The Fastq Quality Filter v 1.06DE         A. Telatin 2012  |
+  +------------------------------------------------------------+
 ";
 
 $print_every = 100000;
@@ -25,7 +29,9 @@ GetOptions('f=s' => \$filename,
 	'fasta'   =>\$fasta,
 	'double'  =>\$double,
         'every'   =>\$print_every,
-	'test=i' => \$test); 
+	'test=i' => \$test,
+	'dif=f'   => \$discard_if_lower,
+); 
 	
 die "
    -f       string    filename (fastq format) [REQUIRED]
@@ -37,6 +43,7 @@ die "
    -il                reads are interleaved
 
    -minq    int       minimum average quality of trimmed seq
+   -dif     float     discard read if a single base has Q<
    -m       int       minimum sequence length
    -x       int       maximum sequence length
 
@@ -158,6 +165,9 @@ sub string2qual {
     my $sum;
     for (my $i=0; $i<length($string); $i++) {
         my $q = substr($string, $i, 1);
+	if (defined $dif and $q < $dif) {
+		return 0;
+	}
         $sum += ord($q) - 33;
     }
     return $sum/length($string) if (length($string));

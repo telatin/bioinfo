@@ -49,6 +49,7 @@ print STDERR "
 my %bin = (
 	"$script_path/fastq_quality_tool.pl" => 1,
 	"$script_path/qiime_map_multiplexer.pl" => 1,
+	"$script_path/qiime_closed.sh" => 1,
 	'tree' => 1,
 	'flash' => 1,
 	'validate_mapping_file.py' => 1
@@ -205,7 +206,7 @@ while (my $file = readdir($dh)){
 	next unless ($file=~/extended/);
 	deb("info; Found $file in $output_directory");
 	if ($file=~/fastq/) {
-		my $command = qq(fastq_quality_tool.pl -f "$output_directory/$file" -minq 33 > "$output_directory/$out");
+		my $command = qq($script_path/fastq_quality_tool.pl -f "$output_directory/$file" -minq 28 -dif 24 > "$output_directory/$out");
 		run($command, "Filtering $file");
 		my $unfilNumber = fastq_count("$output_directory/$file");
 		my $readsNumber = fastq_count("$output_directory/$out");
@@ -232,7 +233,7 @@ close O;
 # ---------------------------------
 print STDERR GREEN BOLD " STEP4. Prepare reads...\n", RESET;
 my $fna_file = "$output_directory/reads.fna";
-my $multimapper = qq(qiime_map_multiplexer.pl -m "$mapping_file" -o "$fna_file" --ext "fq"  --dir "$output_directory");
+my $multimapper = qq($script_path/qiime_map_multiplexer.pl -m "$mapping_file" -o "$fna_file" --ext "fq"  --dir "$output_directory");
 run($multimapper, "The famous fake multiplexer");
 my $compress = "gzip $output_directory/*extended*";
 run($compress, "Compressing extended fragments");
@@ -244,7 +245,7 @@ run($compress, "Compressing extended fragments");
 # ---------------------------------
 
 run("mkdir \"$output_directory/Fragments\"", "Initialize cleanup");
-my $clean = qq(mv "$output_directory/*.gz" "$output_directory/*.hist*"  "$output_directory/Fragments");
+my $clean = qq(mv "$output_directory"/*.gz "$output_directory"/*.hist*  "$output_directory/Fragments");
 run($clean, "Cleanup...");
 
 # Qiime
@@ -259,6 +260,8 @@ run($closed, "Pick closed reference");
 my $filter = qq(filter_otus_from_otu_table.py -i "$output_directory/OTUs/otu_table.biom" -o "$output_directory/OTUs/filtered.biom" --min_count_fraction 0.00005);
 run($filter, "Filtering OTUs") unless ($nofilter);
 
+my $qiime_analysis = qq($script_path/qiime_closed.sh "$output_directory");
+run($qiime_analysis, "Performing core diversity analyses");
 
 
 sub randomPrimer {
@@ -332,11 +335,12 @@ sub run {
 	print STDERR BOLD " [$public_run_subroutine_command]", RESET, "\t$descr\n", RESET;
 	print STDERR BLUE, "#$cmd\n", RESET if ($debug);
 	my $s = Time::HiRes::gettimeofday();
-	`$cmd 2>> $log_file`;
+	my $output = `$cmd 2>> $log_file`;
+	my $error = 0;
+	$error += $?;
+	my $msg = '';
+	$msg .= "(fatal error)" if ($error);
 	`echo "'\n" >> $log_file`;
-
-	my $msg  = "[ !!! ERROR $? ]" if ($?);
-
 	my $e = Time::HiRes::gettimeofday();
 	my $elapsed = formatsec(sprintf("%.2f", $e - $s));
 	my $tree = `tree "$output_directory"`;
@@ -344,10 +348,9 @@ sub run {
 	`echo "[INFO] Finished in $elapsed $msg s " >> $log_file`;
 
 	print STDERR YELLOW "\t\t$msg Done in $elapsed\n", RESET;
-	die " FORCED EXIT (status=$?) after:\n $cmd\n" if ($?);
-
-	return $?;
-
+	if ($error > 0) {
+		die "FATAL ERROR ($error) executing\n$cmd\n\n";
+	}
 }
 sub formatsec {
   my $time = shift;
@@ -370,13 +373,14 @@ sub timeStamp {
 	return $t;
 }
 sub check_dependencies {
-	`. /etc/profile.d/modules.sh && module load qiime ` if (-e "/etc/profile.d/modules.sh" and -e "/lustre/");
 	foreach my $binary (keys %bin) {
 		deb("Starting;Checking $binary\n");
 		`which "$binary" 2>&1 > /dev/null`;
 		if ($?) {
 			print STDERR BOLD RED  "\n FATAL ERROR $?\n", RESET;
 			die " Dependency '$binary' not found in path. \n";
+		} else {
+			print STDERR YELLOW " * $binary found\n",RESET;
 		}
 	}
 }

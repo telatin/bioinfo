@@ -124,7 +124,7 @@ sub getfile {
 		return $i;
 	} else { 
 		if ($out[0]) {
-        die " Error: too many files for $id in $dir/${id}*$reads_extension.\n$cmd\n";
+        die " Error: too many files for $id in $dir/${id}*$reads_extension.\n\n(@out)\n$cmd\n";
     } else {
         die " Error: NO files for $id in $dir/${id}*$reads_extension.\n$cmd\n";
     }

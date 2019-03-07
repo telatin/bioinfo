@@ -61,7 +61,7 @@ open (M, "$mapping_file") || die "FATAL ERROR: Unable to open mapping file.\n";
 
 while (<M>) {
   $c++;
-  next if ($c==1);
+  next if ($_=~/^#/);
 
   chomp;
   ($sample_id, $bc, $primer, $tr, $rev, $desc) = split /\t/, $_;
