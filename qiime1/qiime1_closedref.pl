@@ -13,7 +13,7 @@ use Pod::Usage;
 use File::Basename;
 my $script_path = dirname(__FILE__);
 
-my $program_version = '1.10';
+my $program_version = '1.22';
 
 my @nums = (0..9,'a'..'z','A'..'Z');
 my %nums = map { $nums[$_] => $_ } 0..$#nums;
@@ -26,7 +26,7 @@ my $enable_rdp;
 # short descr
 print STDERR "
 	-----------------------------------------------------------------------
-	 ", BOLD, RED, "MICRO", YELLOW, "BITTER", RESET, " (Andrea Telatin - Cambridge Feb 2016) v. $program_version
+	 ", BOLD, RED, "MICRO", YELLOW, "BITTER", RESET, " (Andrea Telatin, 2016-2019) v. $program_version
 	-----------------------------------------------------------------------
 
 	Produce a BIOM file from FNA and Mapping file.
@@ -40,7 +40,11 @@ print STDERR "
 	 -h     Extended help
 
 
-	Script path '$script_path' should contain dependencies
+	Script path '$script_path' should contain dependencies.
+	After merging and closed-reference OTU picking, a bash
+	script (qiime_closed.sh) will be executed.
+	-----------------------------------------------------------------------
+
 ";
 
 
