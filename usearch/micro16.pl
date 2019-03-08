@@ -12,7 +12,13 @@ my $dependencies = {
 			binary => 'seqkit',
 			test   => 'seqkit stats --help',
 			check  => 'output in machine-friendly tabular format',
-		}
+		},
+	'mapvalidate' => {
+			binary => 'validate_mapping_file.py',
+			test   => 'validate_mapping_file.py --help',
+			check  => 'Usage: validate_mapping_file.py',
+			message => 'Qiime 1.9 should be installed and available',
+	}
 
 };
 
@@ -22,9 +28,12 @@ use File::Basename;
 use Getopt::Long;
 use File::Spec;
 use Data::Dumper; 
+use Digest::MD5 qw(md5 md5_hex md5_base64);
+use Storable;
 
 our $script_dir;
 our $db;
+my $opt_metadata;
 my  $opt_right_primerlen = 20;
 my  $opt_left_primerlen = 20;
 my  $opt_fortag = '_R1';
@@ -34,7 +43,7 @@ my  $opt_output_dir = './u16_output/';
 my  $opt_debug;
 my  $opt_verbose;
 my  $opt_sample_size = 10000;
-
+my  $opt_rewrite = 0;
 
 sub usage {
 	say STDERR<<END;
@@ -44,8 +53,10 @@ sub usage {
  -----------------------------------------------------------------------
 
    -i, --input-dir DIR
-                   Input directory containing paired end FASTQ
-                   files 
+            Input directory containing paired end FASTQ files 
+
+   -m, --metadata  FILE
+            File with sample properties, in Qiime format
 
    --fortag STRING and  --revtag STRING
    				Separator indicating reads strand. Default _R1, _R2
@@ -58,6 +69,7 @@ END
 }
 my $GetOptions = GetOptions(
 	'i|input-dir=s'      => \$opt_input_dir,
+	'm|metadata|mapping=s' => \$opt_metadata,
 	'o|output-dir=s'     => \$opt_output_dir,
 	'd|debug'            => \$opt_debug,
 	'v|verbose'          => \$opt_verbose,
@@ -66,6 +78,7 @@ my $GetOptions = GetOptions(
 	'trim-left=i'        => \$opt_left_primerlen,
 	'trim-right=i'       => \$opt_right_primerlen,
 	'db=s'               => \$db,
+	'rw'                 => \$opt_rewrite,
 );
 
 our $dep = init($dependencies);
@@ -286,7 +299,12 @@ run({
 sub run {
 	my $run_ref = $_[0];
 	my %output = ();
-
+	my $md5 = md5_hex("$run_ref->{command} . $run_ref->{description}");
+	$run_ref->{md5} = "$opt_output_dir/.$md5";
+	if (-e  "$run_ref->{md5}" and !$opt_force_recalculate) {
+		ver(" - Skipping $run_ref->{description}: output found");
+		return 0;
+	}
 	$run_ref->{description} = substr($run_ref->{command}, 0, 12) . '...' if (! $run_ref->{description});
 	# Save program output?
 	my $savelog;
@@ -295,6 +313,7 @@ sub run {
 
 
 	if ($opt_debug) {
+		say STDERR "MD5: $md5";
 		say STDERR Dumper $run_ref;
 	} elsif ($opt_verbose) {
 		say STDERR " - $run_ref->{description}";
@@ -314,6 +333,9 @@ sub run {
 	if (defined $run_ref->{outfile}) {
 		die "FATAL ERROR: Output file null ($run_ref->{outfile})" if (-z "$run_ref->{outfile}");
 	}
+	open O, '>', "$opt_output_dir/.$md5" || die " FATAL ERROR: Unable to write log file <$opt_output_dir/.$md5>\n when executing for $run_ref->{command}";
+	say O Dumper $run_ref;
+	close O;
 }
 sub init {
 	my ($dep_ref) = @_;
@@ -357,12 +379,18 @@ sub ver {
 sub makedir {
 	my $dirname = shift @_;
 	if (-d "$dirname") {
+		if ($opt_rewrite) {
+			run({
+				command     => qq(rm -rf "$dirname/*"),
+				description => "Erasing directory (!): $dirname",
+			});
+		}
 		say STDERR "Output directory found: $dirname" if $opt_debug;
 	} else {
 		my $check = run({
 			'command'     => qq(mkdir -p "$dirname"),
 			'can_fail'    => 0,
-			'description' => 'Creating directory',
+			'description' => "Creating directory <$dirname>",
 		});
 
 	}
