@@ -6,15 +6,16 @@ my $dependencies = {
 			binary => 'usearch_10',
 			test   => 'usearch_10',
 			check  => 'usearch v10',
-			message=> 'Please, place USEARCH v10 binary named "usearch_10" in your path or in the /tools subdirectory of this script'
+			message=> 'Please, place USEARCH v10 binary named "usearch_10" in your path or in the /tools subdirectory of this script',
 		},
 	'seqkit' => {
 			binary => 'seqkit',
 			test   => 'seqkit stats --help',
 			check  => 'output in machine-friendly tabular format',
-		},
+		}
 
 };
+
 
 use v5.16;
 use File::Basename;
@@ -23,6 +24,7 @@ use File::Spec;
 use Data::Dumper; 
 
 our $script_dir;
+our $db;
 my  $opt_right_primerlen = 20;
 my  $opt_left_primerlen = 20;
 my  $opt_fortag = '_R1';
@@ -63,12 +65,16 @@ my $GetOptions = GetOptions(
 	'revtag=s'           => \$opt_revtag,
 	'trim-left=i'        => \$opt_left_primerlen,
 	'trim-right=i'       => \$opt_right_primerlen,
+	'db=s'               => \$db,
 );
 
 our $dep = init($dependencies);
+$db = "$script_dir/db/rdp_16s_v16.fa" unless (defined $db);
+die " FATAL ERROR: Database not found <$db>\n" unless (-e "$db");
 say Dumper $dep if ($opt_debug);
 
 makedir($opt_output_dir);
+
 
 opendir(DIR, $opt_input_dir) or die "FATAL ERROR: Couldn't open input directory <$opt_input_dir>.\n";
 my %reads = ();
@@ -152,7 +158,7 @@ run({
 # Find unique read sequences and abundances
 run({
 	'command' => qq($dep->{u10}->{binary}  -fastx_uniques "$all_filtered" -sizeout -relabel Uniq -fastaout "$all_unique"),
-	'description' => "Quality filter",
+	'description' => "Find unique read sequences and abundances",
 	'outfile'     => $all_unique,
 	'savelog'     => "$all_unique.log",
 });
@@ -191,11 +197,16 @@ for my $otus ($all_otus, $all_zotus) {
 	my $tag = 'OTUs';
 	$tag = 'ASVs' if ($otus =~/asv/i);
 	
-	my $otutabraw = qq("$opt_output_dir"/${tag}_tab.raw);
-	my $otutab    = qq("$opt_output_dir"/${tag}_tab.txt);
-	my $alpha     = qq("$opt_output_dir"/${tag}_alpha.txt);
-	my $tree      = qq("$opt_output_dir"/${tag}.tree);
-	my $beta_dir  = qq("$opt_output_dir"/${tag}_beta);
+	my $otutabraw   = qq("$opt_output_dir"/${tag}_tab.raw);
+	my $otutab      = qq("$opt_output_dir"/${tag}_tab.txt);
+	my $alpha       = qq("$opt_output_dir"/${tag}_alpha.txt);
+	my $tree        = qq("$opt_output_dir"/${tag}.tree);
+	my $beta_dir    = qq("$opt_output_dir"/${tag}_beta);
+	my $rarefaction = qq("$opt_output_dir"/${tag}_rarefaction.txt);
+	my $taxonomy    = qq("$opt_output_dir"/${tag}_taxonomy.txt);
+	my $genus       = qq("$opt_output_dir"/${tag}_taxonomy_genus.txt);
+	my $phylum      = qq("$opt_output_dir"/${tag}_taxonomy_phylum.txt);
+
 	# Make OTU table
 	run({
 		'command' => qq($dep->{u10}->{binary}   -otutab "$all_merged" -otus "$otus" -otutabout "$otutabraw"),
@@ -208,7 +219,7 @@ for my $otus ($all_otus, $all_zotus) {
 	# Normalize to 5k reads / sample
 	run({
 		'command' => qq($dep->{u10}->{binary}  -otutab_norm "$otutabraw" -sample_size $opt_sample_size -output "$otutab"),
-		'description' => "Make $tag table",
+		'description' => "Subsampling to $opt_sample_size",
 		'outfile'     => $otutab,
 		'savelog'     => "$otutab.log",
 	});
@@ -239,15 +250,28 @@ for my $otus ($all_otus, $all_zotus) {
 		'description' => "Beta diversity for $tag",
 		'savelog'     => "$beta_dir/log.txt",
 	});
-	# # Rarefaction
-	# $usearch -alpha_div_rare otutab.txt -output rare.txt
 
-	# # Predict taxonomy
-	# $usearch -sintax otus.fa -db ../data/rdp_16s_v16.fa -strand both \
- #  	-tabbedout sintax.txt -sintax_cutoff 0.8
+	run({
+		'command' => qq($dep->{u10}->{binary}  -alpha_div_rare "$otutab" -output "$rarefaction"),
+		'description' => "Rarefaction",
+		'savelog'     => "$rarefaction.txt",
+	});
 
-	# # Taxonomy summary reports
-	# $usearch -sintax_summary sintax.txt -otutabin otutab.txt -rank g -output genus_summary.txt
+	run({
+		'command' => qq($dep->{u10}->{binary}   -sintax "$otus" -db "$db" -strand both -tabbedout "$taxonomy" -sintax_cutoff 0.8),
+		'description' => "Taxonomy annotation",
+		'savelog'     => "$rarefaction.txt",
+	});
+
+	run({
+		'command' => qq($dep->{u10}->{binary}    -sintax_summary "$taxonomy" -otutabin "$otutab" -rank g -output "$genus"),
+		'description' => "Taxonomy annotation: genus-level summary",
+	});
+	run({
+		'command' => qq($dep->{u10}->{binary}    -sintax_summary "$taxonomy" -otutabin "$otutab" -rank p -output "$phylum"),
+		'description' => "Taxonomy annotation: phylum-level summary",
+	});
+	# $usearch
 	# $usearch -sintax_summary sintax.txt -otutabin otutab.txt -rank p -output phylum_summary.txt
 
 	# # Find OTUs that match mock sequences
@@ -256,20 +280,25 @@ for my $otus ($all_otus, $all_zotus) {
 }
 
 run({
-	'command' => qq(gzip "$opt_output_dir"/all*.fast*),
+	'command' => qq(gzip  --force "$opt_output_dir"/all*.fast*),
 	'description' => "Compress intermediate files",
 });
 sub run {
 	my $run_ref = $_[0];
 	my %output = ();
 
+	$run_ref->{description} = substr($run_ref->{command}, 0, 12) . '...' if (! $run_ref->{description});
+	# Save program output?
+	my $savelog;
+	$savelog = qq( > "$run_ref->{savelog}" 2>&1 ) if (defined $run_ref->{savelog});
+
+
+
 	if ($opt_debug) {
 		say STDERR Dumper $run_ref;
 	} elsif ($opt_verbose) {
 		say STDERR " - $run_ref->{description}";
 	}
-	my $savelog;
-	$savelog = qq( > "$run_ref->{savelog}" 2>&1 ) if (defined $run_ref->{savelog});
 
 	my $output_text = `$run_ref->{command} $savelog`;
 
@@ -309,8 +338,6 @@ sub init {
 			'can_fail'    => 0,
 		});
 
-		ver(" - ${$dep_ref}{$key}->{binary}");
-
 	}
 
 	return $dep_ref;
@@ -333,55 +360,12 @@ sub makedir {
 		say STDERR "Output directory found: $dirname" if $opt_debug;
 	} else {
 		my $check = run({
-			'command'    => qq(mkdir -p "$dirname"),
-			'can_fail'   => 0,
+			'command'     => qq(mkdir -p "$dirname"),
+			'can_fail'    => 0,
+			'description' => 'Creating directory',
 		});
 
 	}
 }
 __END__
-#!/bin/bash
-
-if [ x$usearch == x ] ; then
-	echo Must set \$usearch >> /dev/stderr
-	exit 1
-fi
-
-rm -rf ../out
-mkdir -p ../out
-cd ../out
-
-# Merge paired reads
-# Add sample name to read label (-relabel option)
-# Pool samples together in raw.fq (Linux cat command)
-for Sample in Mock Soil Human Mouse
-do
-	$usearch -fastq_mergepairs ../data/${Sample}*_R1.fq \
-	  -fastqout $Sample.merged.fq -relabel $Sample.
-	cat $Sample.merged.fq >> all.merged.fq
-done
-
-# Strip primers (V4F is 19, V4R is 20)
-$usearch -fastx_truncate all.merged.fq -stripleft 19 -stripright 20 \
-  -fastqout stripped.fq
-
-# Quality filter
-$usearch -fastq_filter stripped.fq -fastq_maxee 1.0 \
-  -fastaout filtered.fa -relabel Filt
-
-# Find unique read sequences and abundances
-$usearch -fastx_uniques filtered.fa -sizeout -relabel Uniq -fastaout uniques.fa
-
-# Make 97% OTUs and filter chimeras
-$usearch -cluster_otus uniques.fa -otus otus.fa -relabel Otu
-
-# Denoise: predict biological sequences and filter chimeras
-$usearch -unoise3 uniques.fa -zotus zotus.fa
-
-##################################################
-# Downstream analysis of OTU sequences & OTU table
-# Can do this for both OTUs and ZOTUs, here do
-# just OTUs to keep it simple.
-##################################################
-
-
+ 
