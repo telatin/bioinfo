@@ -24,12 +24,19 @@ my $dependencies = {
 
 
 use v5.16;
+require bioProch;
 use File::Basename;
+use Term::ANSIColor;
+#local $Term::ANSIColor::AUTORESET = 1;
+use Storable;
 use Getopt::Long;
 use File::Spec;
 use Data::Dumper; 
+$Data::Dumper::Terse = 1;
+use Time::Piece;
+use Time::HiRes qw( usleep ualarm gettimeofday tv_interval nanosleep clock_gettime clock_getres clock_nanosleep utime);
 use Digest::MD5 qw(md5 md5_hex md5_base64);
-use Storable;
+use Storable qw(nstore store_fd nstore_fd freeze thaw dclone);
 
 our $script_dir;
 our $db;
@@ -44,6 +51,9 @@ my  $opt_debug;
 my  $opt_verbose;
 my  $opt_sample_size = 10000;
 my  $opt_rewrite = 0;
+my  $opt_force_recalculate;
+my  $opt_min_merged_seqs = 1000; 				# Minimum sequences in the merged file
+my  $opt_nocolor;
 
 sub usage {
 	say STDERR<<END;
@@ -64,6 +74,11 @@ sub usage {
    -o, --output-dir DIR
    				Output directory. Default: $opt_output_dir
 
+   --repeat
+                Force recalculation of all steps, even if cached
+
+   --min-merged INT
+                Minimum number of sequences merged [$opt_min_merged_seqs]
  -----------------------------------------------------------------------   				
 END
 }
@@ -73,18 +88,21 @@ my $GetOptions = GetOptions(
 	'o|output-dir=s'     => \$opt_output_dir,
 	'd|debug'            => \$opt_debug,
 	'v|verbose'          => \$opt_verbose,
+	'min-merged=i'       => \$opt_min_merged_seqs,
 	'fortag=s'           => \$opt_fortag,
 	'revtag=s'           => \$opt_revtag,
 	'trim-left=i'        => \$opt_left_primerlen,
 	'trim-right=i'       => \$opt_right_primerlen,
 	'db=s'               => \$db,
 	'rw'                 => \$opt_rewrite,
+	'repeat'             => \$opt_force_recalculate,
+	'nocolor'            => \$opt_nocolor,
 );
 
 our $dep = init($dependencies);
 $db = "$script_dir/db/rdp_16s_v16.fa" unless (defined $db);
 die " FATAL ERROR: Database not found <$db>\n" unless (-e "$db");
-say Dumper $dep if ($opt_debug);
+deb_dump($dep);
 
 makedir($opt_output_dir);
 
@@ -124,7 +142,7 @@ while (my $filename = readdir(DIR) ) {
 ver("Input files:");
 foreach my $b (sort keys %reads) {
 	if (defined $reads{$b}{$opt_fortag} and defined $reads{$b}{$opt_revtag}) {
-		say STDERR " - $b" if ($opt_verbose);
+		ver(" - $b", 'bold yellow');
 	} else {
 		 
 		die "FATAL ERROR: Sample '$b' is missing one of the pair ends: only $reads{$b}{$opt_fortag}$reads{$b}{$opt_revtag} found";
@@ -134,8 +152,14 @@ foreach my $b (sort keys %reads) {
 	run({
 		'command' => qq($dep->{u10}->{binary} -fastq_mergepairs "$opt_input_dir/$reads{$b}{$opt_fortag}" -fastqout "$merged" -relabel $b. > "$merged.log" 2>&1),
 		'description' => qq(Joining pairs for $b),
+		'count_seqs'  => "$merged",
+		'min_seqs'    => $opt_min_merged_seqs,
 	});
 	
+	# my $count = count_seqs("$merged");
+	# say STDERR Dumper $count;
+	# die;
+
 }
 
 my $all_merged   = "$opt_output_dir/all_reads_raw.fastq";
@@ -296,36 +320,69 @@ run({
 	'command' => qq(gzip  --force "$opt_output_dir"/all*.fast*),
 	'description' => "Compress intermediate files",
 });
+
 sub run {
+	# Expects an object
+	#     S command            the shell command
+	#     S description        fancy description
+	#     S outfile            die if outfile is empty / doesn't exist
+	#     - nocache            dont load pre-calculated files even if found
+	#     - keep_stderr        redirect stderr to stdout (default: to dev null)
+	#     - no_redirect        dont redirect stderr (the command will do)
+	#     S savelog            save STDERR to this file path
+	#     - can_fail           dont die on exit status > 0
+	#     - no_messages        suppress verbose messages: internal command
+
+	my $start_time = [gettimeofday];
+	my $start_date = localtime->strftime('%m/%d/%Y %H:%M');
 	my $run_ref = $_[0];
 	my %output = ();
 	my $md5 = md5_hex("$run_ref->{command} . $run_ref->{description}");
+
+	# Check a command was to be run
+	unless ($run_ref->{command}){
+		deb_dump($run_ref);
+		die "No command received $run_ref->{description}\n";
+	}
+
+	# Caching
 	$run_ref->{md5} = "$opt_output_dir/.$md5";
-	if (-e  "$run_ref->{md5}" and !$opt_force_recalculate) {
-		ver(" - Skipping $run_ref->{description}: output found");
-		return 0;
+	$run_ref->{executed} = $start_date;
+
+	if (-e  "$run_ref->{md5}"  and ! $opt_force_recalculate and !$run_ref->{nocache} ) {
+		ver(" - Skipping $run_ref->{description}: output found") unless ($run_ref->{no_messages});
+		$run_ref = retrieve("$run_ref->{md5}");
+		$run_ref->{loaded_from_cache} = 1;
+		deb_dump($run_ref);
+
+		return $run_ref;
 	}
 	$run_ref->{description} = substr($run_ref->{command}, 0, 12) . '...' if (! $run_ref->{description});
+	
+
 	# Save program output?
-	my $savelog;
+	my $savelog = ' 2> /dev/null ';
+
+	$savelog = ' 2>&1  ' if ($run_ref->{keep_stderr});
+	$savelog = '' if ($run_ref->{no_redirect});
 	$savelog = qq( > "$run_ref->{savelog}" 2>&1 ) if (defined $run_ref->{savelog});
 
 
 
-	if ($opt_debug) {
-		say STDERR "MD5: $md5";
-		say STDERR Dumper $run_ref;
-	} elsif ($opt_verbose) {
-		say STDERR " - $run_ref->{description}";
-	}
 
+	#        < < <<<<< EXECUTION >>>>>> > >
 	my $output_text = `$run_ref->{command} $savelog`;
+	$run_ref->{output} = $output_text;
+	$run_ref->{exitcode} = $?;
 
 	# Check status (dont die if {can_fail} is set)
 	if ($?) {
 		deb(" - Execution failed: $?");
 		if (! $run_ref->{can_fail}) {
+			say STDERR color('red'), Dumper $run_ref;
 			die " FATAL ERROR:\n Program failed and returned $?.\n Program: $run_ref->{description}\n Command: $run_ref->{command}";
+		} else {
+			ver("Command failed, but it's tolerated [$run_ref->{description}]") unless ($run_ref->{no_messages});
 		}
 	}
 
@@ -333,9 +390,37 @@ sub run {
 	if (defined $run_ref->{outfile}) {
 		die "FATAL ERROR: Output file null ($run_ref->{outfile})" if (-z "$run_ref->{outfile}");
 	}
-	open O, '>', "$opt_output_dir/.$md5" || die " FATAL ERROR: Unable to write log file <$opt_output_dir/.$md5>\n when executing for $run_ref->{command}";
-	say O Dumper $run_ref;
-	close O;
+
+	if (defined $run_ref->{count_seqs}) {
+		my $count = count_seqs($run_ref->{count_seqs});
+		$run_ref->{tot_seqs} = $count->{seq_number};
+		$run_ref->{tot_bp}   = $count->{sum_len};
+		$run_ref->{seq_min_len}   = $count->{min_len};
+		$run_ref->{seq_max_len}   = $count->{max_len};
+		$run_ref->{seq_avg_len}   = $count->{avg_len};
+		if (defined $run_ref->{min_seqs} and $count->{seq_number} < $run_ref->{min_seqs}) {
+			deb("Test fails: min sequences ($run_ref->{min_seqs}) not met ($count->{seq_number} in $run_ref->{count_seqs})");
+			die "FATAL ERROR: File <$run_ref->{count_seqs} has only $count->{seq_number} sequences, after executing $run_ref->{description}\n";
+		}
+	}
+	
+	my $elapsed_time = tv_interval ( $start_time, [gettimeofday]);
+	$run_ref->{elapsed} = $elapsed_time;
+	
+	die unless defined $run_ref->{exitcode};
+	
+	if (! defined $run_ref->{nocache}) {
+		deb("Caching result $run_ref->{elapsed}");
+		nstore $run_ref, "$run_ref->{md5}" || die " FATAL ERROR:\n Unable to write log information to '$run_ref->{md5}'.\n";
+	} 
+
+	if ($opt_debug) {
+		deb_dump($run_ref);
+	} elsif ($opt_verbose) {
+		ver(" - $run_ref->{description}") unless ($run_ref->{no_messages});;
+	}
+	ver("    Done ($elapsed_time s)", 'blue') unless ($run_ref->{no_messages});
+	return $run_ref;
 }
 sub init {
 	my ($dep_ref) = @_;
@@ -358,6 +443,7 @@ sub init {
 			'command' => $cmd,
 			'description' => qq(Checking dependency: <${ $dep_ref }{$key}->{"binary"}>),
 			'can_fail'    => 0,
+			'nocache'     => 1,
 		});
 
 	}
@@ -369,12 +455,77 @@ sub init {
 sub crash {
 	die $_[0];
 }
+
+sub deb_dump {
+	my $ref = shift @_;
+	unless ($opt_nocolor) {
+		print STDERR color('cyan'), "";
+	}
+	say STDERR Dumper $ref if ($opt_debug);
+	unless ($opt_nocolor) {
+		print STDERR color('reset'), "";
+	}	
+}
 sub deb {
-	say STDERR "$_[0]" if ($opt_debug);
+	my ($message, $color) = @_;
+	$color = 'cyan' unless ($color);
+	unless ($opt_nocolor) {
+		print STDERR color($color), "";
+	}
+	say STDERR ":: $message" if ($opt_debug);
+	unless ($opt_nocolor) {
+		print STDERR color('reset'), "";
+	}
 }
 
 sub ver {
-	say STDERR "$_[0]" if ($opt_debug or $opt_verbose);	
+	my ($message, $color) = @_;
+	$color = 'reset' unless ($color);
+	unless ($opt_nocolor) {
+		print STDERR color($color), "";
+	}
+	say STDERR "$message" if ($opt_debug or $opt_verbose);	
+
+	unless ($opt_nocolor) {
+		print STDERR color('reset'), "";
+	}
+}
+
+sub count_seqs {
+	my ($filename, $calculate_n50) = @_;
+	my $all = '';
+	$all = ' --all ' if (defined $calculate_n50);
+
+	my $output;
+	if ( ! -e "$filename" ) {
+		$output->{'success'} = 0;
+		$output->{'message'} = "Unable to locate file <$filename>";
+	} else {
+		#0       1       2       3               4       5       6       7       8       9       10      11      12
+		#file    format  type    num_seqs        sum_len min_len avg_len max_len
+		#file    format  type    num_seqs        sum_len min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)
+		my $file_stats = run({
+			command 	=> qq(seqkit stats $all --tabular "$filename" | grep '[0-9]'),
+			description => "Counting sequence number of $filename with 'seqkit'",
+			can_fail    => 0,
+			no_messages => 1,
+		});
+		$output->{success} = 1;
+		#$output->{cmd} = $file_stats;
+		my @fields = split /\s+/, $file_stats->{output};
+
+		$output->{format}     = $fields[1];
+		$output->{seq_number} = $fields[3];
+		$output->{sum_len}    = $fields[4];
+		$output->{min_len}    = $fields[5];
+		$output->{avg_len}    = $fields[6];
+		$output->{max_len}    = $fields[7];
+		if (defined $calculate_n50) {
+			$output->{sum_gap} = $fields[11];
+			$output->{N50} = $fields[12]; 
+		}
+		return $output;
+	}
 }
 sub makedir {
 	my $dirname = shift @_;
@@ -391,6 +542,7 @@ sub makedir {
 			'command'     => qq(mkdir -p "$dirname"),
 			'can_fail'    => 0,
 			'description' => "Creating directory <$dirname>",
+			'no_messages' => 1,
 		});
 
 	}
