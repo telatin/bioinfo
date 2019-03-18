@@ -34,7 +34,7 @@ shift "$(($OPTIND -1))"
 
 
 if [ ! -e "$rdp_db_path" ]; then
-        echo "VSEARCH database RDP not found at: $silva_db_path"
+        echo "VSEARCH database RDP not found at: $rdp_db_path"
         exit 2;
 fi
 
@@ -54,13 +54,13 @@ echo "#Identity:    $identity_cutoff [-i FLOAT]"
 echo "#Database1:   $rdp_db_path"
 
 
-if [ $opt_do_silva ] && [ ! -e "$silva_db_path" ]; then
+if [ $opt_do_silva -gt 0 ] && [ ! -e "$silva_db_path" ]; then
         echo "VSEARCH database SILVA not found at: $silva_db_path"
         exit 4;
 fi
 
 
-set -euo pipefail
+set -euxo pipefail
 $vsearch_bin_path  --no_progress --threads $threads --sintax "$1" --db "$rdp_db_path"   --tabbedout "$OUTPUT_BASE_NAME.rdp.txt"   \
 	--sintax_cutoff $identity_cutoff >> "$OUTPUT_BASE_NAME.rdp.log" 2>&1
 
