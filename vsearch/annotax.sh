@@ -1,20 +1,33 @@
 #!/bin/bash
 # Annotate a FASTA file using VSEARCH
 
+# Script directory, to locate dependencies
 this_script_path="$( cd "$(dirname "$0")" ; pwd -P )"
-vsearch_bin_path="vsearch"
 convert_script="$this_script_path/convert_usearch_tax.sh"
- 
-rdp_db_path="$this_script_path/rdp_16s_v16.fa"
+
+# Databases
+rdp_db_path="$this_script_path/db/rdp_16s_v16.fa"
+silva_db_path="$this_script_path/db/silva_16s_v123.fa"
+
+# VSEARCH full path (can be user-supplied with -v)
+vsearch_bin_path=$(command -v "vsearch")
+
+# Defaults
 identity_cutoff=0.8
-threads=4
+threads=2
 opt_do_rdp=1
 opt_do_silva=0
 
-echo " USAGE:
-$(basename $0) [options] Input_Fasta [Output_File]
+echo "
+ USAGE:
+ $(basename $0) [options] Input_Fasta [Output_BaseName]
+
   -t INT     Threads [$threads]
   -i FLOAT   Identity threshold [$identity_cutoff]
+  -v STRING  Path to VSEARCH [$vsearch_bin_path]
+  -s         Also annotate with 2nd db (default: only 1st)
+  -1 STRING  Path to first db, RDP ($rdp_db_path)
+  -2 STRING  Path to second db, SILVA ($silva_db_path)
 ";
 
 while getopts t:i:v:s option
@@ -24,6 +37,9 @@ do
 			t) threads=${OPTARG};;
 			i) identity_cutoff=${OPTARG};;
 			v) vsearch_bin_path=${OPTARG};;
+			s) opt_do_silva=1;;
+			1) rdp_dp_path=${OPTARG};;
+			2) silva_db_path=${OPTARG};;
  			?) echo " Wrong parameter $OPTARG";;
 	 esac
 done
@@ -31,6 +47,11 @@ shift "$(($OPTIND -1))"
 
 
 
+if [ ! -e "$vsearch_bin_path" ];
+then
+	echo "VSEARCH (2.11) should be available in the PATH"
+	exit;
+fi
 
 
 if [ ! -e "$rdp_db_path" ]; then
@@ -60,20 +81,30 @@ if [ $opt_do_silva -gt 0 ] && [ ! -e "$silva_db_path" ]; then
 fi
 
 
-set -euxo pipefail
+set -euo pipefail
 $vsearch_bin_path  --no_progress --threads $threads --sintax "$1" --db "$rdp_db_path"   --tabbedout "$OUTPUT_BASE_NAME.rdp.txt"   \
 	--sintax_cutoff $identity_cutoff >> "$OUTPUT_BASE_NAME.rdp.log" 2>&1
 
 
+if [[ $opt_do_silva -gt 0 ]]; 
+then
+	if [ ! -e "$silva_db_path" ]; then
+		echo "SKIPPING: Annotation with Silva: db not found <$silva_db_path>"
+	else
+        echo "#Database2:   $silva_db_path [-s]"
+	        $vsearch_bin_path   --no_progress --threads $threads --sintax "$1" --db "$silva_db_path" --tabbedout "$OUTPUT_BASE_NAME.silva.txt"      \
+       	        --sintax_cutoff $identity_cutoff >> "$OUTPUT_BASE_NAME.silva.log" 2>&1
+	fi
 
+fi
 
 # Convert taxonomy format
 
 if [ -e "$convert_script" ]; then
-	bash $convert_script "$OUTPUT_BASE_NAME.rdp.txt"   "$OUTPUT_BASE_NAME.rdp.tsv"
+	bash $convert_script "$OUTPUT_BASE_NAME.rdp.txt"   "$OUTPUT_BASE_NAME.rdp.tsv"   > "$OUTPUT_BASE_NAME.rdp_conversion.log" 2>&1
 	if [ $opt_do_silva -eq 1 ]; then
-  	bash $convert_script "$OUTPUT_BASE_NAME.silva.txt" "$OUTPUT_BASE_NAME.silva.tsv"
+  	bash $convert_script "$OUTPUT_BASE_NAME.silva.txt" "$OUTPUT_BASE_NAME.silva.tsv" > "$OUTPUT_BASE_NAME.sil_conversion.log" 2>&1
 	fi
 else
-	echo "Convert script not found <$convert_script>: skipping step"
+	echo "SKIPPING: Convert script not found <$convert_script>"
 fi
