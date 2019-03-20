@@ -1,4 +1,5 @@
 #!/usr/bin/env perl
+use 5.016;
 
 # If a dependency is found in ScriptDir/tools/ that copy will be used!
 my $dependencies = {
@@ -23,7 +24,7 @@ my $dependencies = {
 };
 
 
-use v5.16;
+
 require bioProch;
 use File::Basename;
 use Term::ANSIColor;
@@ -34,7 +35,7 @@ use File::Spec;
 use Data::Dumper; 
 $Data::Dumper::Terse = 1;
 use Time::Piece;
-use Time::HiRes qw( usleep ualarm gettimeofday tv_interval nanosleep clock_gettime clock_getres clock_nanosleep utime);
+use Time::HiRes qw(gettimeofday tv_intervalclock_gettime clock_getres);
 use Digest::MD5 qw(md5 md5_hex md5_base64);
 use Storable qw(nstore store_fd nstore_fd freeze thaw dclone);
 
