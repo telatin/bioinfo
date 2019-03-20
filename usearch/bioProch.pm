@@ -1,16 +1,34 @@
 #!/usr/bin/env perl
 
-package bioProch;
+package prochPipes;
 
 require Exporter;
 use v5.16;
 use Carp;
 use Term::ANSIColor;
 use Data::Dumper;
-	$Data::Dumper::Terse = 1;
+local $Data::Dumper::Terse = 1;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(crash deb ver mod_toy auto_dump set_globals readfq readfq2);
+our @EXPORT = qw(
+    crash 
+    deb 
+    ver 
+    mod_toy 
+    auto_dump 
+    set_globals 
+);
 
+our %color = (
+        'error'    =>    'white on_red',
+        'red'      =>    'red',
+        'green'    =>    'green',
+        'cyan'     =>    'cyan',
+        'reset'    =>    'reset',
+        'yellow'   =>    'yellow',
+        'bold'     =>    'bold',
+);
+
+my @valid_settings = qw(no_color timestamp);
 # GLOBAL VARIABLES
 # no_color            bool, disable color print
 # log_file            str,  save info to this file (will always check permissions)
@@ -31,31 +49,32 @@ BEGIN {
 	# Check dependencies?
 
 }
+
+sub cmd {
+    my ($cmd) = @_;
+
+    # cmd
+    #   $command
+    #   $description
+    #   @input_exists/_notnull/_fasta/_fastq
+    #   @output_exists/_notnull/_fasta/_fastq
+}
 sub set_globals {
 	my $global_settings = shift @_;
 	$SETTINGS = $global_settings;
-
 	$SETTINGS->{timestamp} = `date`;
 	chomp($SETTINGS->{timestamp});
 
 	return 1;
 }
 sub _color {
+    return '' if ($SETTINGS->{no_color} == 1);
+        
 	my $requested_color = shift @_;
 
-	my %color = (
-		'error'    =>    'white on_red',
-		'red'      =>    'red',
-		'green'    =>    'green',
-		'cyan'     =>    'cyan',
-		'reset'    =>    'reset',
-		'yellow'   =>    'yellow',
-		'bold'     =>    'bold',
-	);
 
-	if ($SETTINGS->{no_color} == 1) {
-		return '';
-	} elsif (defined $color{$requested_color} ) {
+	
+    if (defined $color{$requested_color} ) {
 		return color($color{$requested_color});
 	} else {
 		return color('reset');
@@ -66,15 +85,19 @@ sub _color {
 
 sub auto_dump {
 	my ($ref, $name) = @_;
-
-	say STDERR Dumper $ref;
+    print STDERR _color('yellow'), "VARIABLE <$name>:\n";
+	print STDERR Dumper $ref;
+    print STDERR _color('reset'), "";
 }
 
 sub crash {
 	my ($err, $glob) = @_;
-	# message*     string        error message for the user
-	# title        string, opt   title (default FATAL ERROR)
-	# dumpvar      ref
+    # ERROR:
+	#  message*     string        error message for the user
+	#  title        string, opt   title (default FATAL ERROR)
+	#  dumpvar      ref
+
+    # 
 
 	my ($package, $filename, $line) = caller;
 	
@@ -111,103 +134,7 @@ sub mod_toy {
 }
 
 
-sub readfq {
-    my ($filename) = @_;
-
-    if (! $SETTINGS->{readfq_file}->{$filename}) {
-    	
-    	$SETTINGS->{readfq_file}->{$filename} = 1;
-    	@aux = undef;
-    	open I, '<', $filename || die;
-    	print <I>;
-    }  
-    my $aux = \@aux;
-    my $fh = \*I;
-    @$aux = [undef, 0] if (!@$aux);
-    return if ($aux->[1]);
-    if (!defined($aux->[0])) {
-        while (<$fh>) {
-            chomp;
-            if (substr($_, 0, 1) eq '>' || substr($_, 0, 1) eq '@') {
-                $aux->[0] = $_;
-                last;
-            }
-        }
-        if (!defined($aux->[0])) {
-            $aux->[1] = 1;
-            return;
-        }
-    }
-    my ($name, $comm) = /^.(\S+)(?:\s+)(.+)/ ? ($1, $2) : 
-                        /^.(\S+)/ ? ($1, '') : ('', '');
-    my $seq = '';
-    my $c;
-    $aux->[0] = undef;
-    while (<$fh>) {
-        chomp;
-        $c = substr($_, 0, 1);
-        last if ($c eq '>' || $c eq '@' || $c eq '+');
-        $seq .= $_;
-    }
-    $aux->[0] = $_;
-    $aux->[1] = 1 if (!defined($aux->[0]));
-    return ($name, $comm, $seq) if ($c ne '+');
-    my $qual = '';
-    while (<$fh>) {
-        chomp;
-        $qual .= $_;
-        if (length($qual) >= length($seq)) {
-            $aux->[0] = undef;
-            return ($name, $comm, $seq, $qual);
-        }
-    }
-    $aux->[1] = 1;
-    return ($name, $seq);
-}
 
 
 
-sub readfq2 {
-    my ($fh, $aux) = @_;
-    @$aux = [undef, 0] if (!@$aux);
-    return if ($aux->[1]);
-    if (!defined($aux->[0])) {
-        while (<$fh>) {
-            chomp;
-            if (substr($_, 0, 1) eq '>' || substr($_, 0, 1) eq '@') {
-                $aux->[0] = $_;
-                last;
-            }
-        }
-        if (!defined($aux->[0])) {
-            $aux->[1] = 1;
-            return;
-        }
-    }
-    my ($name, $comm) = /^.(\S+)(?:\s+)(.+)/ ? ($1, $2) : 
-                        /^.(\S+)/ ? ($1, '') : ('', '');
-    my $seq = '';
-    my $c;
-    $aux->[0] = undef;
-    while (<$fh>) {
-        chomp;
-        $c = substr($_, 0, 1);
-        last if ($c eq '>' || $c eq '@' || $c eq '+');
-        $seq .= $_;
-    }
-    $aux->[0] = $_;
-    $aux->[1] = 1 if (!defined($aux->[0]));
-    return ($name, $comm, $seq) if ($c ne '+');
-    my $qual = '';
-    while (<$fh>) {
-        chomp;
-        $qual .= $_;
-        if (length($qual) >= length($seq)) {
-            $aux->[0] = undef;
-            return ($name, $comm, $seq, $qual);
-        }
-    }
-    $aux->[1] = 1;
-    return ($name, $seq);
-}
 1;

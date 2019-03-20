@@ -47,7 +47,7 @@ use File::Spec;
 use Data::Dumper; 
 $Data::Dumper::Terse = 1;
 use Time::Piece;
-use Time::HiRes qw( usleep ualarm gettimeofday tv_interval nanosleep clock_gettime clock_getres clock_nanosleep utime);
+use Time::HiRes qw(   gettimeofday tv_interval );
 use Digest::MD5 qw(md5 md5_hex md5_base64);
 use Storable qw(nstore store_fd nstore_fd freeze thaw dclone);
 
@@ -63,7 +63,8 @@ my  ($opt_reference, $opt_target);
 my  $opt_min_overlap_ratio = 0.50;
 my  $opt_min_overlap = 30;
 my  $opt_max_overlap = 250;
-my  $opt_scanning_wnd = 2000;
+my  $opt_scanning_wnd = 300;
+my  $opt_scanning_stp = 10;
 
 my  $opt_debug;
 my  $opt_verbose;
@@ -133,6 +134,21 @@ my $GetOptions = GetOptions(
 our $dep = init($dependencies);
 deb_dump($dep);
 
+if (! -s "$opt_contigs_file") {
+	crash("Unable to find contig file (-c) <$opt_contigs_file>");
+}
+
+if (! -s "$opt_r1_file") {
+	crash("Unable to find R1 file (-1) <$opt_contigs_file>");
+}
+
+if (! -s "$opt_r2_file") {
+	crash("Unable to find R2 file (-2) <$opt_contigs_file>");
+}
+
+if (! -s "$opt_reference") {
+	crash("Unable to find reference file (-r) <$opt_contigs_file>");
+}
 my $merge_file= qq($opt_output_dir/reads.extendedFrags.fastq);
 my $ctg_stats = count_seqs($opt_contigs_file, {format => 'FASTA', N50 => 1, die_on_error => 1});
 my $r1_stats  = count_seqs($opt_r1_file, {format => 'FASTQ', min_seqs => 10000, die_on_error => 1});
@@ -211,13 +227,13 @@ for my $ref_chromosome (keys %{ $mapping }) {
 	
 	my @sorted = sort {$a <=> $b} keys %{ $mapping->{$ref_chromosome} };
 	say "$ref_chromosome\t$chr_len [ $sorted[0] .. $sorted[-1] ]";
-	for (my $start_pos = $sorted[0]; $start_pos <= $sorted[-1]; $start_pos++) {
+	for (my $start_pos = $sorted[0]; $start_pos <= $sorted[-1]; $start_pos+=$opt_scanning_stp) {
 		my $counter = 0;
-		
-		for (my $i = $start_pos; $i < ($start_pos + $opt_scanning_wnd); $i++) {
+		my $end_pos =$start_pos + $opt_scanning_wnd;
+		for (my $i = $start_pos; $i < $end_pos; $i++) {
 			$counter += $mapping->{$ref_chromosome}->{$i};
 		}
-		say ">$start_pos\t$counter" if ($counter);
+		say "$start_pos-$end_pos\t$counter" if ($counter);
 	}
 
 }
@@ -383,6 +399,9 @@ sub init {
 
 sub crash {
 	my ($error, $options) = @_;
+	my ($package, $filename, $line) = caller;
+	print STDERR (caller(0))[3], " $filename -> $package\[line:$line\]\n";
+
 	die $error;
 }
 
