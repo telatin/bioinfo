@@ -5,7 +5,7 @@
 this_script_path="$( cd "$(dirname "$0")" ; pwd -P )"
 convert_script="$this_script_path/convert_usearch_tax.sh"
 
-# Databases
+# Databases PATHS (defaults, can be overridden with -1 and -2 respectively)
 rdp_db_path="$this_script_path/db/rdp_16s_v16.fa"
 silva_db_path="$this_script_path/db/silva_16s_v123.fa"
 
@@ -30,7 +30,7 @@ echo "
   -2 STRING  Path to second db, SILVA ($silva_db_path)
 ";
 
-while getopts t:i:v:s option
+while getopts t:i:v:1:2:s option
 do
 	case "${option}"
 		in
