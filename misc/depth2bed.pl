@@ -72,7 +72,7 @@ while (my $line = <STDIN> ) {
 		
 
 		if ( ! defined $start ) {
-			$start = $position;
+			$start = $position - 1;
 			push(@cov, $coverage);
 		}
 
