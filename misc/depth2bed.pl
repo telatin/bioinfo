@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
 
 use v5.14;
 use Getopt::Long;
@@ -26,12 +26,12 @@ print STDERR "
  ---------------------------------------------------------------------
  A program that convert the output of \"samtools depth\" into a BED
  track
-
  Example usage:
  samtools depth -a {BAMFILE} | $0 -min {COV} -max {COV} -len {MINSPAN}
-
  or:
  $0 -min {COV} -max {COV} -len {MINSPAN} -i INPUTFILE
+ 
+ [[WARNING: Average is miscalculated in this version]]
 ";
 exit;	
 } elsif ($opt_min == 0 and $opt_max == 2_000_000_000) {
@@ -51,6 +51,7 @@ my $start;
 my @cov = ();
 
 while (my $line = <STDIN> ) {
+    next if ($line=~/^#/);
 	chomp($line);
 	my ($chromosome_name, $position, $coverage) = split /\t/, $line;
 
@@ -64,7 +65,10 @@ while (my $line = <STDIN> ) {
 			print "$prev_chr\t$start\t$prev_pos\tAVG=$avg\t0\t+\t$start\t$prev_pos\t$color\n"
 				 if ($prev_pos - $start > $opt_minlen);
 		}
-
+	
+		$start = undef;
+		$end   = undef;
+		@cov = ();
 	}
 
 
@@ -73,19 +77,20 @@ while (my $line = <STDIN> ) {
 
 		if ( ! defined $start ) {
 			$start = $position - 1;
-			push(@cov, $coverage);
+			
 		}
-
+        push(@cov, $coverage); #TODO: Check average array for bugs
 	} else {
 
 		if ( defined $start ) {
 			my $avg = avg(@cov);
 			my $color = col($avg);
 			print "$prev_chr\t$start\t$prev_pos\tAVG=$avg\t0\t+\t$start\t$prev_pos\t$color\n"
-				 if ($prev_pos - $start > $opt_minlen);
+				 if ($prev_pos - $start >= $opt_minlen);
 		}
 		$start = undef;
 		$end   = undef;
+		@cov = ();
 
 	}
 
@@ -113,7 +118,7 @@ sub avg {
 	}
 
 	if ($tot) {
-		return sprintf("%.4f", $sum/$tot);
+		return sprintf("%.5f", $sum/$tot);
 	}
 }
 
