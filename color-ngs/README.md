@@ -12,6 +12,8 @@ A script to add colors to FASTA/FASTQ files.
   --nocolorseq        Don't color the sequence
   --nocolorqual       Don't color quality
   --nocolor           Don't color anything (why?)
+  
+  --visualqual        Replace quality char with ASCII art bars
 
   -s, --qual_scale    INT,INT,INT,INT 
                       Set quality thresholds for colors
