@@ -7,7 +7,12 @@ use Pod::Usage;
 use Term::ANSIColor  qw(:constants colorvalid colored);
 use Getopt::Long;
 use File::Basename;
-use JSON;
+my $hasJSON = eval {
+	require JSON;
+	JSON->import();
+	1;
+};
+
 
 local $Term::ANSIColor::AUTORESET = 1;
 
@@ -60,6 +65,9 @@ my $result = GetOptions(
 pod2usage({-exitval => 0, -verbose => 2}) if $opt_help;
 version() if defined $opt_version;
 
+if ($opt_format=~/json/i and ! $hasJSON) {
+	die "FATAL ERROR: Please install perl module JSON first [e.g. cpanm JSON]\n";
+}
 our %output_object;
 
 if (defined $opt_format) {
