@@ -24,3 +24,6 @@ A script to add colors to FASTA/FASTQ files.
   -d, --debug         Debug mode
   -v, --verbose       Print more information
 ```
+
+Example output:
+![screenshot](https://pbs.twimg.com/media/D5VbVLVWkAUE4nk.png)
