@@ -1,9 +1,10 @@
 #!/usr/bin/perl
-# A script to create multiple users in a server for teaching sessions
+
+#ABSTRACT: A script to create multiple users in a server for teaching sessions
 
 use strict;
-our $prefix = 'qibuser';		#Username prefix (plus number)
-our $passwd = 'QuadramBash-';	#User password (plus number)
+our $prefix = 'user';			#Username prefix (plus number)
+our $passwd = 'PickYourEasyPwd-';	#User password (plus number)
 
 our $HOMEPATH = '/homes/qib/';		# Where to store user directories
 our $tutorialdir = 'course';		# Writeable directory in each student home
