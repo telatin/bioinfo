@@ -26,4 +26,5 @@ A script to add colors to FASTA/FASTQ files.
 ```
 
 Example output:
+
 ![screenshot](https://pbs.twimg.com/media/D5VbVLVWkAUE4nk.png)
