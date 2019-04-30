@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# A script to calculate N50 from one or multiple FASTA/FASTQ files.
-#
+# A script to calculate N50 from one or multiple FASTA/FASTQ files,
+# or from STDIN. This has been used to develop Proch::N50
 
 use 5.012;
 use warnings;
@@ -8,13 +8,11 @@ use Pod::Usage;
 use Term::ANSIColor  qw(:constants colorvalid colored);
 use Getopt::Long;
 use File::Basename;
-use Proch::N50;
-
 our %program = (
   'NAME'      => 'FASTx N50 CALCULATOR',
   'AUTHOR'    => 'Andrea Telatin',
   'MAIL'      => 'andrea.telatin@quadram.ac.uk',
-  'VERSION'   => '1.0',
+  'VERSION'   => '1.1',
 );
 my $hasJSON = eval {
 	require JSON;
@@ -97,28 +95,20 @@ foreach my $file (@ARGV) {
 		open STDIN, '<', "$file" || die " FATAL ERROR:\n Unable to open file for reading ($file).\n";
 	}
 
-  my $JSON = 1 if ($opt_format =~/JSON/ );
-  my $FileStats = Proch::N50::getStats($file, $JSON);
-  if ( ! $FileStats->{status} )  {
-    print STDERR "Error parsing <$file>\n";
-    next;
-  }
-  my $n50 = $FileStats->{N50};
-  my $n   = $FileStats->{seqs};
-  my $slen= $FileStats->{size};
 
-	# my @aux = undef;
-	# my %sizes;
-	# my ($n, $slen) = (0, 0);
-  #
-	# while (my ($name, $seq) = readfq(\*STDIN, \@aux)) {
-	#     ++$n;
-  #
-	#     my $size = length($seq);
-	#     $slen += $size;
-	#     $sizes{$size}++;
-	# }
-	# my $n50 = n50fromHash(\%sizes, $slen);
+
+	my @aux = undef;
+	my %sizes;
+	my ($n, $slen) = (0, 0);
+
+	while (my ($name, $seq) = readfq(\*STDIN, \@aux)) {
+	    ++$n;
+
+	    my $size = length($seq);
+	    $slen += $size;
+	    $sizes{$size}++;
+	}
+	my $n50 = n50fromHash(\%sizes, $slen);
 
 	say STDERR "[$file]\tTotalSize:$slen;N50:$n50;Sequences:$n" if ($opt_debug);
 
@@ -271,7 +261,8 @@ __END__
 
 =head1 NAME
 
-B<n50.pl> - A program to calculate N50 from FASTA/FASTQ files
+B<original_n50_algorithm.pl> - A program to calculate N50 from FASTA/FASTQ files, used 
+as template for Proch::N50
 
 =head1 AUTHOR
 
@@ -286,7 +277,7 @@ printed for a single file and all metrics in TSV format for multiple files.
 
 =head1 SYNOPSIS
 
-n50.pl [options] [FILE1 FILE2 FILE3...]
+n50_algorithm.pl [options] [FILE1 FILE2 FILE3...]
 
 =head1 PARAMETERS
 

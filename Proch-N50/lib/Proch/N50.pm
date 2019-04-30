@@ -103,9 +103,9 @@ name of the directory containing the input file
 
 =over 4
 
-=item L<json> (string: JSON pretty printed)
+=item I<json> (string: JSON pretty printed)
 
-JSON string of the object (only if JSON is installed)
+(pretty printed) JSON string of the object (only if JSON is installed)
 
 =back
 

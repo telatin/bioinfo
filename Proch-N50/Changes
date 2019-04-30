@@ -1,5 +1,6 @@
 0.021	2019-05-01
 	* Improved documentation
+	* Added a demo implementation of n50.pl using Proch::N50, keeping n50_algorithm.pl that does the same but without Proch::N50
 
 0.02	2019-04-30
 	* Added this Changelog
