@@ -33,7 +33,7 @@ my $result = GetOptions(
 	'nc|nocolor'          => \$opt_nocolor,
 	'ns|nocolorseq'       => \$opt_nocolor_seq,
 	'nq|nocolorqual'      => \$opt_nocolor_qual,
-  'vq|visualqual'       => \$opt_visualqual,
+	'vq|visualqual'       => \$opt_visualqual,
 
 	's|qual_scale=s'      => \$opt_qual_scale,
 	'l|qual_verylow=f'    => \$opt_qual_verylow,
