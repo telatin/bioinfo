@@ -1,12 +1,19 @@
 #!/usr/bin/env perl
 # A script to calculate N50 from one or multiple FASTA/FASTQ files,
-# or from STDIN.
+# or from STDIN. This has been used to develop Proch::N50
 
-use v5.12;
+use 5.012;
+use warnings;
 use Pod::Usage;
 use Term::ANSIColor  qw(:constants colorvalid colored);
 use Getopt::Long;
 use File::Basename;
+our %program = (
+  'NAME'      => 'FASTx N50 CALCULATOR',
+  'AUTHOR'    => 'Andrea Telatin',
+  'MAIL'      => 'andrea.telatin@quadram.ac.uk',
+  'VERSION'   => '1.1',
+);
 my $hasJSON = eval {
 	require JSON;
 	JSON->import();
@@ -16,12 +23,7 @@ my $hasJSON = eval {
 
 local $Term::ANSIColor::AUTORESET = 1;
 
-our %program = (
-  'NAME'      => 'FASTx N50 CALCULATOR',
-  'AUTHOR'    => 'Andrea Telatin',
-  'MAIL'      => 'andrea.telatin@quadram.ac.uk',
-  'VERSION'   => '1.1',
-);
+
 my $opt_separator = "\t";
 my $opt_format = 'default';
 my %formats = (
@@ -36,8 +38,6 @@ my %formats = (
 
 my ($opt_help,
 	$opt_version,
-	$opt_input,
-	$opt_verbose,
 	$opt_debug,
 	$opt_color,
 	$opt_nonewline,
@@ -65,7 +65,7 @@ my $result = GetOptions(
 pod2usage({-exitval => 0, -verbose => 2}) if $opt_help;
 version() if defined $opt_version;
 
-if ($opt_format=~/json/i and ! $hasJSON) {
+if ( ($opt_format=~/json/i ) and (! $hasJSON) ) {
 	die "FATAL ERROR: Please install perl module JSON first [e.g. cpanm JSON]\n";
 }
 our %output_object;
@@ -87,7 +87,7 @@ if (defined $opt_format) {
 }
 foreach my $file (@ARGV) {
 
-	if (!-e "$file" and $file ne '-') {
+	if ( (!-e "$file") and ($file ne '-') ) {
 		die " FATAL ERROR:\n File not found ($file).\n";
 	} elsif ($file eq '-') {
 		$file = '<STDIN>';
@@ -123,7 +123,7 @@ foreach my $file (@ARGV) {
 
 my $file_num = scalar keys %output_object;
 
-if (!$opt_format or $opt_format eq 'default') {
+if (not $opt_format or $opt_format eq 'default') {
 # DEFAULT
 	if ($file_num == 1) {
 		my @keys = keys %output_object;
@@ -148,7 +148,7 @@ if (!$opt_format or $opt_format eq 'default') {
 		print $r,$opt_separator;
 		for (my $i = 1; $i <= $#fields; $i++) {
 			print $output_object{$r}{$fields[$i]};
-			if ($i == $#fields and !$opt_nonewline) {
+			if ( ($i == $#fields) and (not $opt_nonewline) ) {
 				print "\n";
 			} else {
 				print $opt_separator;
@@ -173,22 +173,27 @@ sub debug {
 	$title = 'INFO' unless defined $title;
 	$title = uc($title);
 	printMessage($message, $title, 'green', 'reset');
+	return 1;
 }
 sub printMessage {
 	my ($message, $title, $title_color, $message_color) = @_;
-	$title_color   = 'reset' if (!defined $title_color or !colorvalid($title_color) or !$opt_color);
-	$message_color = 'reset' if (!defined $message_color or !colorvalid($message_color) or !$opt_color);
+	$title_color   = 'reset' if ((!defined $title_color)  or (!colorvalid($title_color)) or (!$opt_color));
+	$message_color = 'reset' if ((!defined $message_color) or (!colorvalid($message_color)) or (!$opt_color));
 
 
 	say STDERR colored("$title", $title_color), "\t", colored("$message", $message_color);
+	return 1;
 }
 sub n50fromHash {
 	my ($hash_ref, $total) = @_;
 	my $tlen = 0;
 	foreach my $s (sort {$a <=> $b} keys %{$hash_ref}) {
 		$tlen += $s * ${$hash_ref}{$s};
-		return $s if ($tlen >= ($total/2));
+
+		# In my original implementation it was >=, here > to comply with 'seqkit'
+		return $s if ($tlen > ($total/2));
 	}
+	return 0;
 
 }
 
@@ -199,9 +204,11 @@ sub version {
 
 	Program to calculate N50 from multiple FASTA/FASTQ files.
 	Type --help (or -h) to see the full documentation.), '', 'blue', 'green');
-END
 
+	return $program{VERSION};
 }
+
+# Heng Li's subroutine (edited)
 sub readfq {
     my ($fh, $aux) = @_;
     @$aux = [undef, 0] if (!(@$aux));
@@ -301,7 +308,7 @@ line.
 =item I<-n, --nonewline>
 
 If used with 'default' or 'csv' output format, will NOT print the
-newline character after the N50. Usually used in bash scripting.ù
+newline character after the N50. Usually used in bash scripting.
 
 =item I<-t, --template>
 

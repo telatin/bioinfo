@@ -1,0 +1,8 @@
+0.02	2019-04-30
+	* Added this Changelog
+	* Removed unnecessary variables
+	* Fixed POD documentation
+	- TODO: Bareword filehandle: currently used as readfq() needs it
+
+0.01	2019-04-30
+	* Initial release on CPAN
