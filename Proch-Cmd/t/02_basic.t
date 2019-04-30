@@ -4,10 +4,14 @@ use Proch::Cmd;
 use Test::More tests => 1;
 
 my $command = Proch::Cmd->new(
-	command => 'whoami | wc -l',
+	command => "pwd",
 );
 
 my $output = $command->simplerun();
 
-ok($output->{output} eq "1\n", "Output [whoami| wc -l] is 1: correct");
+
+SKIP: {
+    skip "wrong version", 1 if ( $^O ne 'linux');
+    ok($output->{exit_code} == 0, "Output [pwd] returned no error");
+};
 

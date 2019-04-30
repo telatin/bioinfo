@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-
+use 5.018;
 
 use ExtUtils::MakeMaker;
 
@@ -14,15 +14,18 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "Proch-Cmd",
   "LICENSE" => "mit",
+  "MIN_PERL_VERSION" => "5.018",
   "NAME" => "Proch::Cmd",
   "PREREQ_PM" => {
     "Data::Dumper" => "2.127",
     "Digest::MD5" => "2.00",
     "File::Slurp" => "9999.19",
+    "Moose" => "2.0",
     "Storable" => "2.21",
-    "Time::HiRes" => "1.9741"
+    "Time::HiRes" => "1.9726",
+    "Time::Piece" => "1.1"
   },
-  "VERSION" => "0.001",
+  "VERSION" => "0.0041",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -33,8 +36,10 @@ my %FallbackPrereqs = (
   "Data::Dumper" => "2.127",
   "Digest::MD5" => "2.00",
   "File::Slurp" => "9999.19",
+  "Moose" => "2.0",
   "Storable" => "2.21",
-  "Time::HiRes" => "1.9741"
+  "Time::HiRes" => "1.9726",
+  "Time::Piece" => "1.1"
 );
 
 
