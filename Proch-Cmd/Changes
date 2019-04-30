@@ -1,18 +1,19 @@
-0.005   2018-04-30
+0.0042       2018-04-30
 
   * Unit test skipped under Windows
+  * Documentation updated
+
+0.004-0041  2018-04-29
+
   * Requires perl 5.018
-
-0.004   2018-04-29
-
   * Fixed missing dependency declaration: Moose, Time::Piece
   * POD documentation updated (added SYNOPSIS)
 
-0.002-3 2018-04-29
+0.002-3     2018-04-29
 
   * POD documentation updated
   * Added this file 'Changes'
 
-0.001 2018-04-12
+0.001       2018-04-12
 
   * First release to CPAN, includes the minimal version of the method 'simplerun()'.

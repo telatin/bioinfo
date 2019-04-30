@@ -2,9 +2,8 @@ use strict;
 use warnings;
 package Proch::Cmd;
 
-$Proch::Cmd::VERSION = 0.0041;
-# ABSTRACT: Execute shell commands controlling inputs and outputs
-
+$Proch::Cmd::VERSION = 0.0042;
+# ABSTRACT: Execute shell commands with caching capability to store output of executed programs (useful for multi step pipelines where some steps can take long)
 
 use 5.014;
 use Moose; 
@@ -99,6 +98,7 @@ sub _check_input_files_exist {
 		return $output;
 	}
 }
+
 sub _check_output_files_exist {
 	# All {input_files} need to be found
 	my ($self) = @_;
