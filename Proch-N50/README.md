@@ -2,6 +2,7 @@
 [![CPAN](https://img.shields.io/badge/CPAN-Proch::N50-1abc9c.svg)](https://metacpan.org/pod/Proch::N50)
 [![Kwalitee](https://cpants.cpanauthors.org/release/PROCH/Proch-N50-0.03.svg)](https://cpants.cpanauthors.org/release/PROCH/Proch-N50-0.03)
 [![Version](https://img.shields.io/cpan/v/Proch-N50.svg)](https://metacpan.org/pod/Proch::N50)
+[![Tests](https://img.shields.io/badge/Tests-Grid-1abc9c.svg)](www.cpantesters.org/distro/P/Proch-N50.html)
 ### A simple Perl module to calculate N50 of a FASTA or FASTQ file
 
 For updated documentation, please visit *[Meta::CPAN](https://metacpan.org/pod/Proch::N50)*.
