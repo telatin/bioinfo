@@ -1,4 +1,8 @@
-0.023	2019-05-01
+0.03	2019-05-02
+	* Added method _getJsonStats()_ to directly receive JSON string
+	* Expanded json unit test accordingly
+
+0.023	2019-05-01 
 	* Updated dist.ini [Dist::Zilla::Role::ModuleMetadata]
 	* Synopsis uses print instead of say
 	* Added CPAN distribution tests (CPAN Version check, POD integrity, Changes, Kwalitee...)

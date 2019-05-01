@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Proch::N50;
-use Test::More tests => 3;
+use Test::More tests => 6;
 use FindBin qw($Bin);
 eval 'use JSON';
 plan skip_all => 'JSON required for this test' if $@;
@@ -11,9 +11,17 @@ SKIP: {
 	skip "missing input file" unless (-e "$file");
 	my $stats = getStats($file, 'JSON');
 	my $data = decode_json($stats->{json});
+
 	ok($data->{N50} > 0, 'got an N50');
 	ok($data->{N50} == 65, 'N50==65 as expected (in JSON)');
 	ok($data->{seqs} == 6, 'NumSeqs==6 as expected (in JSON)');
+
+	my $json = jsonStats($file);
+	my $data2= decode_json($json);
+	ok($data->{N50} > 0, 'got an N50 from jsonStats()');
+	ok($data->{N50} == 65, 'N50==65 as expected from jsonStats()');
+	ok($data->{seqs} == 6, 'NumSeqs==6 as expected from jsonStats()');
+	
 }
 
 # {

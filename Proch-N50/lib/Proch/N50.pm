@@ -4,11 +4,11 @@ use 5.016;
 use warnings;
 
 package Proch::N50;
-$Proch::N50::VERSION = '0.023';
+$Proch::N50::VERSION = '0.03';
 
 use File::Basename;
 use Exporter qw(import);
-our @EXPORT = qw(getStats getN50);
+our @EXPORT = qw(getStats getN50 jsonStats);
 
 =head1 NAME
 
@@ -109,6 +109,11 @@ name of the directory containing the input file
 
 =back
 
+=head2 jsonStats(filepath)
+
+Returns the JSON string with basic stats (same as $result->{json} from I<getStats>(File, JSON)).
+Requires JSON installed.
+
 =head1 Dependencies
 
 =over 4
@@ -165,7 +170,15 @@ sub getN50 {
         return 0;
     }
 }
-
+sub jsonStats {
+  my ($file) = @_;
+  my $stats = getStats($file,  'JSON');
+  if ($stats->{status} and $stats->{json}) {
+    return $stats->{json}
+  } else {
+    return undef;
+  }
+}
 sub getStats {
 
     # Parses a FASTA/FASTQ file and returns stats
