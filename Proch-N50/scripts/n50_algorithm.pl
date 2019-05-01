@@ -261,8 +261,8 @@ __END__
 
 =head1 NAME
 
-B<original_n50_algorithm.pl> - A program to calculate N50 from FASTA/FASTQ files, used 
-as template for Proch::N50
+B<original_n50_algorithm> - A program to calculate N50 from FASTA/FASTQ files, used
+as template for Proch::N50 [n50_algorithm.pl]
 
 =head1 AUTHOR
 

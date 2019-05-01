@@ -4,7 +4,7 @@ use 5.016;
 use warnings;
 
 package Proch::N50;
-$Proch::N50::VERSION = '0.021';
+$Proch::N50::VERSION = '0.023';
 
 use File::Basename;
 use Exporter qw(import);
@@ -21,13 +21,13 @@ sequences) for a FASTA or FASTQ file. It's small and without dependencies.
   my $filepath = '/path/to/assembly.fasta';
 
   # Get N50 only: getN50(file) will return an integer
-  say "N50 only:\t" ,getN50($filepath);
+  print "N50 only:\t", getN50($filepath), "\n";
 
   # Full stats
   my $seq_stats = getStats($filepath);
-  say Data::Dumper->Dump( [ $seq_stats ], [ qw(*FASTA_stats) ] );
-	# Will print:
-	# %FASTA_stats = (
+  print Data::Dumper->Dump( [ $seq_stats ], [ qw(*FASTA_stats) ] );
+  # Will print:
+  # %FASTA_stats = (
   #               'N50' => 65,
   #               'dirname' => 'data',
   #               'size' => 130,
@@ -36,11 +36,11 @@ sequences) for a FASTA or FASTQ file. It's small and without dependencies.
   #               'status' => 1
   #             );
 
-	# Get also a JSON object
-	my $seq_stats_with_JSON = getStats($filepath, 'JSON');
-	say $seq_stats_with_JSON->{json};
-	# Will print:
-	# {
+  # Get also a JSON object
+  my $seq_stats_with_JSON = getStats($filepath, 'JSON');
+  print $seq_stats_with_JSON->{json}, "\n";
+  # Will print:
+  # {
   #    "seqs" : 6,
   #    "status" : 1,
   #    "filename" : "small_test.fa",
