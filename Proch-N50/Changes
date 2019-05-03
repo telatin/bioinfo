@@ -1,3 +1,6 @@
+0.031	2019-05-03
+	* Removed JSON unit test: this module has been built to only optionally require it. Even unit tests can have bugs.
+
 0.03	2019-05-02
 	* Added method _getJsonStats()_ to directly receive JSON string
 	* Expanded json unit test accordingly
