@@ -1,3 +1,7 @@
+0.032	2019-05-04
+	* JSON unit test: restored conditional test
+	* Removed unnecessary files from distribution (Dist::Zilla::Plugin::VersionFromModule/)
+
 0.031	2019-05-03
 	* Removed JSON unit test: this module has been built to only optionally require it. Even unit tests can have bugs.
 
@@ -5,7 +9,7 @@
 	* Added method _getJsonStats()_ to directly receive JSON string
 	* Expanded json unit test accordingly
 
-0.023	2019-05-01 
+0.023	2019-05-01
 	* Updated dist.ini [Dist::Zilla::Role::ModuleMetadata]
 	* Synopsis uses print instead of say
 	* Added CPAN distribution tests (CPAN Version check, POD integrity, Changes, Kwalitee...)
