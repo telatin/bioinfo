@@ -1,5 +1,10 @@
-0.039	2019-05-06
-	* Added 'min√' and 'max' (lengths) in returned stats
+0.04	2019-05-06
+	* Transition to JSON::PP, now required since its a core module
+	* Updated POD documentation
+	* Updated JSON tests
+	
+0.039	2019-05-05
+	* Added 'min' and 'max' (lengths) in returned stats
 	* Updated requirements specs in YML distribution file
 
 0.032	2019-05-04

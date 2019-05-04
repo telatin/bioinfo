@@ -4,13 +4,9 @@ use 5.016;
 use warnings;
 
 package Proch::N50;
-<<<<<<< HEAD
-$Proch::N50::VERSION = '0.039';
-
-=======
-$Proch::N50::VERSION = '0.05';
+$Proch::N50::VERSION = '0.04';
 use JSON::PP;
->>>>>>> c4e767708d0bd51f88699831cde4d8b26a12052c
+
 use File::Basename;
 use Exporter qw(import);
 our @EXPORT = qw(getStats getN50 jsonStats);
@@ -159,15 +155,6 @@ Andrea Telatin <andrea@telatin.com>, Quadram Institute Bioscience
 This free software under MIT licence. No warranty, explicit or implicit, is provided.
 
 =cut
-
-# <use JSON>
-# my $hasJSON = 0;
-#
-# $hasJSON = eval {
-#     require JSON;
-#     JSON->import();
-#     1;
-# };
 
 sub _n50fromHash {
     my ( $hash_ref, $total ) = @_;
