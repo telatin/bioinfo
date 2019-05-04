@@ -29,6 +29,8 @@ sequences) for a FASTA or FASTQ file. It's small and without dependencies.
   # Will print:
   # %FASTA_stats = (
   #               'N50' => 65,
+  #               'min' => 4,
+  #               'max' => 65,
   #               'dirname' => 'data',
   #               'size' => 130,
   #               'seqs' => 6,
@@ -41,12 +43,11 @@ sequences) for a FASTA or FASTQ file. It's small and without dependencies.
   print $seq_stats_with_JSON->{json}, "\n";
   # Will print:
   # {
-  #    "seqs" : 6,
   #    "status" : 1,
+  #    "seqs" : 6,
+  #    <...>
   #    "filename" : "small_test.fa",
   #    "N50" : "65",
-  #    "dirname" : "data",
-  #    "size" : 130
   # }
 
 =head1 METHODS
@@ -74,6 +75,22 @@ total number of bp in the files
 =item I<N50> (int)
 
 the actual N50
+
+=back
+
+=over 4
+
+=item I<min> (int)
+
+Minimum length observed in FASTA/Q file
+
+=back
+
+=over 4
+
+=item I<max> (int)
+
+Maximum length observed in FASTA/Q file
 
 =back
 
@@ -112,13 +129,13 @@ name of the directory containing the input file
 =head2 jsonStats(filepath)
 
 Returns the JSON string with basic stats (same as $result->{json} from I<getStats>(File, JSON)).
-Requires JSON installed.
+Requires JSON::PP installed.
 
 =head1 Dependencies
 
 =over 4
 
-=item L<JSON> (optional)
+=item L<JSON::PP>
 
 =back
 
@@ -151,6 +168,8 @@ sub _n50fromHash {
     my ( $hash_ref, $total ) = @_;
     my $tlen = 0;
     my @sorted_keys = sort { $a <=> $b } keys %{$hash_ref};
+
+    # Added in v. 0.039
     my $max =  $sorted_keys[-1];
     my $min =  $sorted_keys[0] ;
 
@@ -235,7 +254,7 @@ sub getStats {
         my $json = JSON::PP->new->ascii->pretty->allow_nonref;
 
         my $pretty_printed = $json->encode( $answer );
-        
+
         $answer->{json} = $pretty_printed;
 
     }
