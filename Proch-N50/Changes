@@ -1,3 +1,7 @@
+0.04	2019-05-06
+	* Added 'min√' and 'max' (lengths) in returned stats
+	* Updated requirements specs in YML distribution file
+
 0.032	2019-05-04
 	* JSON unit test: restored conditional test
 	* Removed unnecessary files from distribution (Dist::Zilla::Plugin::VersionFromModule/)

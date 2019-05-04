@@ -4,7 +4,7 @@ use 5.016;
 use warnings;
 
 package Proch::N50;
-$Proch::N50::VERSION = '0.032';
+$Proch::N50::VERSION = '0.04';
 
 use File::Basename;
 use Exporter qw(import);
@@ -149,11 +149,15 @@ $hasJSON = eval {
 sub _n50fromHash {
     my ( $hash_ref, $total ) = @_;
     my $tlen = 0;
-    foreach my $s ( sort { $a <=> $b } keys %{$hash_ref} ) {
+    my @sorted_keys = sort { $a <=> $b } keys %{$hash_ref};
+    my $max =  $sorted_keys[-1];
+    my $min =  $sorted_keys[0] ;
+
+    foreach my $s ( @sorted_keys ) {
         $tlen += $s * ${$hash_ref}{$s};
 
      # Was '>=' in my original implementation of N50. Now complies with 'seqkit'
-        return $s if ( $tlen > ( $total / 2 ) );
+        return ($s, $min, $max) if ( $tlen > ( $total / 2 ) );
     }
 
 }
@@ -213,11 +217,13 @@ sub getStats {
         $slen += $size;
         $sizes{$size}++;
     }
-    my $n50 = _n50fromHash( \%sizes, $slen );
+    my ($n50, $min, $max) = _n50fromHash( \%sizes, $slen );
 
     my $basename = basename($file);
 
     $answer->{N50}      = $n50;
+    $answer->{min}      = $min;
+    $answer->{max}      = $max;
     $answer->{seqs}     = $n;
     $answer->{size}     = $slen;
     $answer->{filename} = $basename;
