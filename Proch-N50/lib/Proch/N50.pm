@@ -4,8 +4,8 @@ use 5.016;
 use warnings;
 
 package Proch::N50;
-$Proch::N50::VERSION = '0.04';
-
+$Proch::N50::VERSION = '0.05';
+use JSON::PP;
 use File::Basename;
 use Exporter qw(import);
 our @EXPORT = qw(getStats getN50 jsonStats);
@@ -138,13 +138,14 @@ This free software under MIT licence. No warranty, explicit or implicit, is prov
 
 =cut
 
-my $hasJSON = 0;
-
-$hasJSON = eval {
-    require JSON;
-    JSON->import();
-    1;
-};
+# <use JSON>
+# my $hasJSON = 0;
+#
+# $hasJSON = eval {
+#     require JSON;
+#     JSON->import();
+#     1;
+# };
 
 sub _n50fromHash {
     my ( $hash_ref, $total ) = @_;
@@ -229,9 +230,12 @@ sub getStats {
     $answer->{filename} = $basename;
     $answer->{dirname}  = dirname($file);
 
-    if ( $hasJSON and defined $wantJSON ) {
-        my $json           = JSON->new->allow_nonref;
-        my $pretty_printed = $json->pretty->encode($answer);
+    if ( defined $wantJSON ) {
+
+        my $json = JSON::PP->new->ascii->pretty->allow_nonref;
+
+        my $pretty_printed = $json->encode( $answer );
+        
         $answer->{json} = $pretty_printed;
 
     }

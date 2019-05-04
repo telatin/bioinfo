@@ -3,7 +3,7 @@ use warnings;
 use Proch::N50;
 use Test::More;
 use FindBin qw($Bin);
-eval 'use JSON';
+use JSON::PP;
 plan skip_all => 'JSON required for this test' if $@;
 my $file = "$Bin/../data/small_test.fa";
 
