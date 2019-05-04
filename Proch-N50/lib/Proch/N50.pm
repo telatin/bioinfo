@@ -4,8 +4,13 @@ use 5.016;
 use warnings;
 
 package Proch::N50;
+<<<<<<< HEAD
+$Proch::N50::VERSION = '0.039';
+
+=======
 $Proch::N50::VERSION = '0.05';
 use JSON::PP;
+>>>>>>> c4e767708d0bd51f88699831cde4d8b26a12052c
 use File::Basename;
 use Exporter qw(import);
 our @EXPORT = qw(getStats getN50 jsonStats);
