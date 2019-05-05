@@ -156,48 +156,12 @@ This free software under MIT licence. No warranty, explicit or implicit, is prov
 
 =cut
 
-sub _n50fromHash {
-    my ( $hash_ref, $total ) = @_;
-    my $tlen = 0;
-    my @sorted_keys = sort { $a <=> $b } keys %{$hash_ref};
-
-    # Added in v. 0.039
-    my $max =  $sorted_keys[-1];
-    my $min =  $sorted_keys[0] ;
-
-    foreach my $s ( @sorted_keys ) {
-        $tlen += $s * ${$hash_ref}{$s};
-
-     # Was '>=' in my original implementation of N50. Now complies with 'seqkit'
-        return ($s, $min, $max) if ( $tlen > ( $total / 2 ) );
-    }
-
-}
-
-sub getN50 {
-
-    # Invokes the full getStats returning N50 or 0 in case of error;
-    my ($file) = @_;
-    my $stats = getStats($file);
-    if ( $stats->{status} ) {
-        return $stats->{N50};
-    }
-    else {
-        return 0;
-    }
-}
-sub jsonStats {
-  my ($file) = @_;
-  my $stats = getStats($file,  'JSON');
-  if ($stats->{status} and $stats->{json}) {
-    return $stats->{json}
-  } else {
-    return undef;
-  }
-}
 sub getStats {
-
     # Parses a FASTA/FASTQ file and returns stats
+    # Parameters:
+    # * filename (Str)
+    # * Also return JSON string (Bool)
+
     my ( $file, $wantJSON ) = @_;
     my $answer;
     $answer->{status} = 1;
@@ -209,11 +173,13 @@ sub getStats {
         $answer->{message} = "Unable to find <$file>";
     }
 
+    # Open file
     open FILE, '<', "$file" || do {
         $answer->{status}  = 0;
         $answer->{message} = "Unable to read <$file>";
     };
 
+    # Return failed status if file not found or not readable
     if ( $answer->{status} == 0 ) {
         return $answer;
     }
@@ -241,19 +207,69 @@ sub getStats {
     $answer->{filename} = $basename;
     $answer->{dirname}  = dirname($file);
 
+    # If JSON is required return JSON
     if ( defined $wantJSON ) {
 
         my $json = JSON::PP->new->ascii->pretty->allow_nonref;
-
         my $pretty_printed = $json->encode( $answer );
-
         $answer->{json} = $pretty_printed;
 
     }
     return $answer;
 }
 
+sub _n50fromHash {
+    # _n50fromHash(): calculate stats from hash of lengths
+    #
+    # Parameters:
+    # * A hash of  key={contig_length} and value={no_contigs}
+    # * Sum of all contigs sizes
+    my ( $hash_ref, $total ) = @_;
+    my $tlen = 0;
+    my @sorted_keys = sort { $a <=> $b } keys %{$hash_ref};
+
+    # Added in v. 0.039
+    my $max =  $sorted_keys[-1];
+    my $min =  $sorted_keys[0] ;
+
+    foreach my $s ( @sorted_keys ) {
+        $tlen += $s * ${$hash_ref}{$s};
+
+     # Was '>=' in my original implementation of N50. Now complies with 'seqkit'
+        return ($s, $min, $max) if ( $tlen > ( $total / 2 ) );
+    }
+
+}
+
+sub getN50 {
+
+    # Invokes the full getStats returning N50 or 0 in case of error;
+    my ($file) = @_;
+    my $stats = getStats($file);
+
+    # Verify status and return
+    if ( $stats->{status} ) {
+        return $stats->{N50};
+    } else {
+        return 0;
+    }
+}
+
+sub jsonStats {
+  my ($file) = @_;
+  my $stats = getStats($file,  'JSON');
+  if ($stats->{status} and $stats->{json}) {
+    return $stats->{json}
+  } else {
+    return undef;
+  }
+}
+
 sub _readfq {
+    # _readfq(): Heng Li's FASTA/FASTQ parser
+    # Parameters:
+    # * FileHandle
+    # * Auxiliary array ref
     my ( $fh, $aux ) = @_;
     @$aux = [ undef, 0 ] if ( !(@$aux) );
     return if ( $aux->[1] );
