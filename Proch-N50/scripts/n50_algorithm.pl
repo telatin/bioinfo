@@ -65,11 +65,13 @@ my $result = GetOptions(
 pod2usage({-exitval => 0, -verbose => 2}) if $opt_help;
 version() if defined $opt_version;
 
+# Unable to propose JSON if JSON.pm is not installed [ TODO: go to JSON:PP ]
 if ( ($opt_format=~/json/i ) and (! $hasJSON) ) {
 	die "FATAL ERROR: Please install perl module JSON first [e.g. cpanm JSON]\n";
 }
 our %output_object;
 
+# Output format
 if (defined $opt_format) {
 	$opt_format = lc($opt_format);
 	if (!$formats{$opt_format}) {
@@ -79,17 +81,22 @@ if (defined $opt_format) {
 			join(', ',@list) . ".\n";
 	}
 
+  # Warning for unimplemented formats
 	if ($formats{$opt_format} eq 'Not implemented') {
 		print STDERR " WARNING: Format '$opt_format' not implemented yet. Switching to 'tsv'.\n";
 		$opt_format = 'tsv';
 	}
 
 }
+
+# Parse all files
 foreach my $file (@ARGV) {
 
+  # Raise error if file not found (unless '-', to be used as STDIN)
 	if ( (!-e "$file") and ($file ne '-') ) {
 		die " FATAL ERROR:\n File not found ($file).\n";
 	} elsif ($file eq '-') {
+    # Set filename as <STDIN> for the output
 		$file = '<STDIN>';
 	} else {
 		open STDIN, '<', "$file" || die " FATAL ERROR:\n Unable to open file for reading ($file).\n";
@@ -134,13 +141,13 @@ if (not $opt_format or $opt_format eq 'default') {
 		}
 	}
 } elsif ($opt_format eq 'json') {
-
+  # JSON output
 	my $json = JSON->new->allow_nonref;
 	my $pretty_printed = $json->pretty->encode( \%output_object );
 	say $pretty_printed;
 
 } elsif ($opt_format eq 'tsv' or $opt_format eq 'csv') {
-
+  # TSV output
 	my @fields = ('path', 'seqs', 'size', 'N50');
 	say '#', join($opt_separator, @fields) if (!defined $opt_noheader);
 
@@ -167,7 +174,7 @@ if (not $opt_format or $opt_format eq 'default') {
 	}
 }
 
-
+# Print information
 sub debug {
 	my ($message, $title) = @_;
 	$title = 'INFO' unless defined $title;
@@ -175,6 +182,8 @@ sub debug {
 	printMessage($message, $title, 'green', 'reset');
 	return 1;
 }
+
+# Print colored message unsless --nocolor
 sub printMessage {
 	my ($message, $title, $title_color, $message_color) = @_;
 	$title_color   = 'reset' if ((!defined $title_color)  or (!colorvalid($title_color)) or (!$opt_color));

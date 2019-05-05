@@ -1,3 +1,6 @@
+0.050	2019-05-07
+	* Code updated
+
 0.040	2019-05-06
 	* PAUSE upload problem
 
@@ -5,7 +8,7 @@
 	* Transition to JSON::PP, now required since its a core module
 	* Updated POD documentation
 	* Updated JSON tests
-	
+
 0.039	2019-05-05
 	* Added 'min' and 'max' (lengths) in returned stats
 	* Updated requirements specs in YML distribution file
