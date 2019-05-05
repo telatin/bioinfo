@@ -4,7 +4,7 @@ use 5.016;
 use warnings;
 
 package Proch::N50;
-$Proch::N50::VERSION = '0.04';
+$Proch::N50::VERSION = '0.040';
 use JSON::PP;
 
 use File::Basename;
