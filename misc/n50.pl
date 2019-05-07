@@ -65,7 +65,7 @@ my $result = GetOptions(
 pod2usage({-exitval => 0, -verbose => 2}) if $opt_help;
 version() if defined $opt_version;
 
-if ($opt_format=~/json/i and ! $hasJSON) {
+if ($opt_format=~/json/i  and ! $hasJSON) {
 	die "FATAL ERROR: Please install perl module JSON first [e.g. cpanm JSON]\n";
 }
 our %output_object;
@@ -262,10 +262,8 @@ Andrea Telatin <andrea.telatin@quadram.ac.uk>
 
 =head1 DESCRIPTION
  
-This program parses a list of FASTA/FASTQ files calculating for each one
-the number of sequences, the sum of sequences lengths and the N50.
-It will print the result in different formats, by default only the N50 is
-printed for a single file and all metrics in TSV format for multiple files.
+This program parses a list of FASTA/FASTQ files calculating for each one the number of sequences, the sum of sequences lengths and the N50.
+It will print the result in different formats, by default only the N50 is printed for a single file and all metrics in TSV format for multiple files.
  
 =head1 SYNOPSIS
  
@@ -292,6 +290,8 @@ and finally N50.
 
 Instead of printing the path of each file, will only print
 the filename, stripping relative or absolute paths to it.
+WARNING: Will produce corrupted output if multiple files have
+the same basename!
 
 =item I<-j, --noheader>
 
