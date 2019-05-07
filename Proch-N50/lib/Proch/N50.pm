@@ -1,6 +1,6 @@
 #ABSTRACT: Calculate N50 from a FASTA or FASTQ file without dependencies
 
-use 5.016;
+use 5.014;
 use warnings;
 
 package Proch::N50;
@@ -235,7 +235,9 @@ sub _n50fromHash {
     foreach my $s ( @sorted_keys ) {
         $tlen += $s * ${$hash_ref}{$s};
 
+     # N50 definition: https://en.wikipedia.org/wiki/N50_statistic
      # Was '>=' in my original implementation of N50. Now complies with 'seqkit'
+     # N50 Calculation
         return ($s, $min, $max) if ( $tlen > ( $total / 2 ) );
     }
 
@@ -258,9 +260,12 @@ sub getN50 {
 sub jsonStats {
   my ($file) = @_;
   my $stats = getStats($file,  'JSON');
+
+  # Return JSON object if getStats() was able to reduce one
   if ($stats->{status} and $stats->{json}) {
     return $stats->{json}
   } else {
+    # Return undef otherwise
     return undef;
   }
 }
@@ -272,10 +277,13 @@ sub _readfq {
     # * Auxiliary array ref
     my ( $fh, $aux ) = @_;
     @$aux = [ undef, 0 ] if ( !(@$aux) );
+
+    # Parse FASTA/Q
     return if ( $aux->[1] );
     if ( !defined( $aux->[0] ) ) {
         while (<$fh>) {
             chomp;
+            # Sequence header > or @
             if ( substr( $_, 0, 1 ) eq '>' || substr( $_, 0, 1 ) eq '@' ) {
                 $aux->[0] = $_;
                 last;

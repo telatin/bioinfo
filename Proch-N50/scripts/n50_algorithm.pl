@@ -2,6 +2,11 @@
 # A script to calculate N50 from one or multiple FASTA/FASTQ files,
 # or from STDIN. This has been used to develop Proch::N50
 
+## THIS SCRIPT IS NOT ACTIVELY MAINTAINED:
+## ˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆˆ
+## It's reported here for historical reasons,
+## use 'n50.pl' instead (will use Proch::N50)
+
 use 5.012;
 use warnings;
 use Pod::Usage;
@@ -14,6 +19,8 @@ our %program = (
   'MAIL'      => 'andrea.telatin@quadram.ac.uk',
   'VERSION'   => '1.1',
 );
+
+# Now Proch::N50 will use JSON::PP, core since 5.13.9
 my $hasJSON = eval {
 	require JSON;
 	JSON->import();
