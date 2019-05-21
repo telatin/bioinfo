@@ -1,4 +1,9 @@
-0.005	2019-05-01
+# Versions ending with even numbers are unstable
+
+0.007	2019-05-22
+  * Updated package metadata, added YAML version
+
+0.005	2019-05-21
   * Package kwalitee tests
   * Moved dev tests in xt/
 

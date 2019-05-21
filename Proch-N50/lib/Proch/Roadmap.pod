@@ -20,6 +20,16 @@ Here we set out the vision for the future of C<Proch::N50>.
 B<0.0x> are alpha releases aiming to produce v. 0.1 as first stable release.
 B<x.0> are major release, while B<x.y> are minor releases (y != 0).
 
+=head1 v. 0.5
+
+=over 4
+
+=item *
+
+Transition to FASTX::Reader that implements the same parser previously used here
+
+=back
+
 =head1 v. 1.0
 
 =over 4
@@ -27,6 +37,8 @@ B<x.0> are major release, while B<x.y> are minor releases (y != 0).
 =item *
 
 function getN50 tested on 100 datasets and compared with C<seqkit>.
+
+
 
 =item *
 

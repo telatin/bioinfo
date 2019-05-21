@@ -1,14 +1,17 @@
-0.050	2019-05-07
-	* Code documentation, improved
-	* Scripts updated
+0.06	2019-05-15
+	* Moved version check to release tests
 
-0.040	2019-05-06
-	* PAUSE upload problem
-
+0.05	2019-05-09
+	* Code updated
+	* Transition to FASTX::Reader to parse FASTA file
+	* Improving documentation coverage
+	* Feature freeze aiming to release v 0.1 stable
+	
 0.04	2019-05-06
 	* Transition to JSON::PP, now required since its a core module
 	* Updated POD documentation
 	* Updated JSON tests
+	* Resubmitted as v 0.040 (PAUSE upload problem)
 
 0.039	2019-05-05
 	* Added 'min' and 'max' (lengths) in returned stats

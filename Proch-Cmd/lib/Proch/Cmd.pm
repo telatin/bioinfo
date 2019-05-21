@@ -1,8 +1,9 @@
 package Proch::Cmd;
-use strict;
+use 5.012;
 use warnings;
-$Proch::Cmd::VERSION = 0.005;
-# ABSTRACT: Execute shell commands with caching capability to store output of executed programs (useful for multi step pipelines where some steps can take long)
+$Proch::Cmd::VERSION = 0.007;
+
+# ABSTRACT: Execute shell commands with caching capability to store output of executed programs (useful for multi step pipelines where some steps can take long) {beta}
 
 =pod
 
@@ -44,14 +45,6 @@ version 0.0041
   my $simple = $c1->simplerun();
 
   say $simple->{output} if (! $simple->{exit_code});
-
-=head1 NAME
-
-Proch::Cmd - a simple library to execute shell commands
-
-=head1 VERSION
-
-version 0.004
 
 =head1 METHODS
 
@@ -117,25 +110,6 @@ file called 'data.ok'. To view its content:
 
   perl scripts/read_cache_files.pl -f data/data.ok
 
-=head1 AUTHOR
-
-Andrea Telatin <andrea@telatin.com>
-
-=head1 COPYRIGHT AND LICENSE
-
-This software is free software under MIT Licence.
-
-=head1 AUTHOR
-
-Andrea Telatin <andrea.telatin@quadram.ac.uk>
-
-=head1 COPYRIGHT AND LICENSE
-
-This software is Copyright (c) 2019 by Andrea Telatin.
-
-This is free software, licensed under:
-
-  The MIT (X11) License
 
 =cut
 

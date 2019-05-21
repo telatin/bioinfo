@@ -90,17 +90,21 @@ if (defined $opt_format) {
 
 }
 foreach my $file (@ARGV) {
-
+  # Check if file exists / check if '-' supplied read STDIN
 	if ( (!-e "$file") and ($file ne '-') ) {
 		die " FATAL ERROR:\n File not found ($file).\n";
 	} elsif ($file eq '-') {
+    # Set file to <STDIN>
 		$file = '<STDIN>';
 	} else {
+    # Open filehandle with $file
 		open STDIN, '<', "$file" || die " FATAL ERROR:\n Unable to open file for reading ($file).\n";
 	}
 
   my $JSON = 1 if ($opt_format =~/JSON/ );
   my $FileStats = Proch::N50::getStats($file, $JSON);
+
+  # Validate answer: check {status}==1
   if ( ! $FileStats->{status} )  {
     print STDERR "Error parsing <$file>\n";
     next;
@@ -112,18 +116,6 @@ foreach my $file (@ARGV) {
   my $min = $FileStats->{min};
   my $max = $FileStats->{max};
 
-	# my @aux = undef;
-	# my %sizes;
-	# my ($n, $slen) = (0, 0);
-  #
-	# while (my ($name, $seq) = readfq(\*STDIN, \@aux)) {
-	#     ++$n;
-  #
-	#     my $size = length($seq);
-	#     $slen += $size;
-	#     $sizes{$size}++;
-	# }
-	# my $n50 = n50fromHash(\%sizes, $slen);
 
 	say STDERR "[$file]\tTotalSize:$slen;N50:$n50;Sequences:$n" if ($opt_debug);
 
@@ -140,24 +132,28 @@ foreach my $file (@ARGV) {
 
 my $file_num = scalar keys %output_object;
 
+# Format Output
+
 if (not $opt_format or $opt_format eq 'default') {
-# DEFAULT
+  # DEFAULT: format
 	if ($file_num == 1) {
+    # If only one file is supplied, just return N50 (to allow easy pipeline parsing)
 		my @keys = keys %output_object;
 		say $output_object{$keys[0]}{'N50'};
 	} else {
+    # Print table
 		foreach my $r (keys %output_object) {
 			say $r, $opt_separator ,$output_object{$r}{'N50'};
 		}
 	}
 } elsif ($opt_format eq 'json') {
-
+  # Print JSON object
 	my $json = JSON->new->allow_nonref;
 	my $pretty_printed = $json->pretty->encode( \%output_object );
 	say $pretty_printed;
 
 } elsif ($opt_format eq 'tsv' or $opt_format eq 'csv') {
-
+  # TSV format
 	my @fields = ('path', 'seqs', 'size', 'N50');
 	say '#', join($opt_separator, @fields) if (!defined $opt_noheader);
 
@@ -174,6 +170,7 @@ if (not $opt_format or $opt_format eq 'default') {
 		}
 	}
 } elsif ($opt_format eq 'custom') {
+  # Format: custom (use tags {new}{tab} {path} ...)
 	foreach my $r (keys %output_object) {
 		my $output_string = $opt_template;
 		$output_string =~s/{new}/$new/g;
@@ -185,6 +182,7 @@ if (not $opt_format or $opt_format eq 'default') {
 }
 
 
+# Print debug information
 sub debug {
 	my ($message, $title) = @_;
 	$title = 'INFO' unless defined $title;
@@ -192,6 +190,8 @@ sub debug {
 	printMessage($message, $title, 'green', 'reset');
 	return 1;
 }
+
+# Print message with colors unless --nocolor
 sub printMessage {
 	my ($message, $title, $title_color, $message_color) = @_;
 	$title_color   = 'reset' if ((!defined $title_color)  or (!colorvalid($title_color)) or (!$opt_color));
@@ -201,6 +201,8 @@ sub printMessage {
 	say STDERR colored("$title", $title_color), "\t", colored("$message", $message_color);
 	return 1;
 }
+
+# Calculate N50 from a hash of contig lengths and their counts
 sub n50fromHash {
 	my ($hash_ref, $total) = @_;
 	my $tlen = 0;

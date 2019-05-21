@@ -8,6 +8,8 @@ use Pod::Usage;
 use Term::ANSIColor  qw(:constants colorvalid colored);
 use Getopt::Long;
 use File::Basename;
+use FindBin qw($Bin);
+#~loclib~
 use Proch::N50;
 use Data::Dumper;
 our %program = (

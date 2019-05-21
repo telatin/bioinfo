@@ -1,20 +1,16 @@
-#ABSTRACT: Calculate N50 from a FASTA or FASTQ file without dependencies
+package Proch::N50;
+#ABSTRACT: a small module to calculate N50 (total size, and total number of sequences) for a FASTA or FASTQ file. It's small and without dependencies.
 
 use 5.014;
 use warnings;
 
-package Proch::N50;
-$Proch::N50::VERSION = '0.05';
-use JSON::PP;
+$Proch::N50::VERSION = '0.06';
 
+use JSON::PP;
+use FASTX::Reader;
 use File::Basename;
 use Exporter qw(import);
 our @EXPORT = qw(getStats getN50 jsonStats);
-
-=head1 NAME
-
-B<Proch::N50> - a small module to calculate N50 (total size, and total number of
-sequences) for a FASTA or FASTQ file. It's small and without dependencies.
 
 =head1 SYNOPSIS
 
@@ -132,17 +128,25 @@ name of the directory containing the input file
 Returns the JSON string with basic stats (same as $result->{json} from I<getStats>(File, JSON)).
 Requires JSON::PP installed.
 
+=head2 _n50fromHash(hash, totalsize)
+
+This is an internal helper subroutine that perform the actual N50 calculation, hence its addition
+to the documentation.
+Expects the reference to an hash of sizes C<$size{SIZE} = COUNT> and the total sum of sizes obtained
+parsing the sequences file.
+Returns N50, min and max lengths.
+
 =head1 Dependencies
 
 =over 4
 
-=item L<JSON::PP>
+=item L<JSON::PP> (core)
 
 =back
 
 =over 4
 
-=item L<Term::ANSIColor> (optional; for a demo script)
+=item L<Term::ANSIColor> (optional)  for the n50.pl script
 
 =back
 
@@ -173,28 +177,32 @@ sub getStats {
         $answer->{message} = "Unable to find <$file>";
     }
 
-    # Open file
-    open FILE, '<', "$file" || do {
-        $answer->{status}  = 0;
-        $answer->{message} = "Unable to read <$file>";
-    };
+    
 
     # Return failed status if file not found or not readable
     if ( $answer->{status} == 0 ) {
         return $answer;
     }
 
-    my @aux = undef;
+    ##my @aux = undef;
+    my $Reader;
+    if ($file ne '-') {
+       $Reader = FASTX::Reader->new({ filename => "$file" });
+    } else {
+       $Reader = FASTX::Reader->new({ filename => '{{STDIN}}' });
+    }
     my %sizes;
     my ( $n, $slen ) = ( 0, 0 );
 
     # Parse FASTA/FASTQ file
-    while ( my ( $name, $seq ) = _readfq( \*FILE, \@aux ) ) {
+    while ( my $seq = $Reader->getRead() ) {
         ++$n;
-        my $size = length($seq);
+        my $size = length($seq->{seq});
         $slen += $size;
         $sizes{$size}++;
     }
+
+    # Invokes core _n50fromHash() routine
     my ($n50, $min, $max) = _n50fromHash( \%sizes, $slen );
 
     my $basename = basename($file);
@@ -261,6 +269,7 @@ sub jsonStats {
   my ($file) = @_;
   my $stats = getStats($file,  'JSON');
 
+
   # Return JSON object if getStats() was able to reduce one
   if ($stats->{status} and $stats->{json}) {
     return $stats->{json}
@@ -324,5 +333,6 @@ sub _readfq {
     $aux->[1] = 1;
     return ( $name, $seq );
 }
+
 
 1;
