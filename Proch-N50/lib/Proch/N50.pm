@@ -1,20 +1,16 @@
-#ABSTRACT: Lightweight module to calculate N50 statistics from a FASTA or FASTQ file
+package Proch::N50;
+#ABSTRACT: a small module to calculate N50 (total size, and total number of sequences) for a FASTA or FASTQ file. It's small and without dependencies.
 
-use 5.016;
+use 5.014;
 use warnings;
 
-package Proch::N50;
-$Proch::N50::VERSION = '0.05';
+$Proch::N50::VERSION = '0.06';
+
 use JSON::PP;
 use FASTX::Reader;
 use File::Basename;
 use Exporter qw(import);
 our @EXPORT = qw(getStats getN50 jsonStats);
-
-=head1 NAME
-
-B<Proch::N50> - a small module to calculate N50 (total size, and total number of
-sequences) for a FASTA or FASTQ file. It's small and without dependencies.
 
 =head1 SYNOPSIS
 
@@ -247,7 +243,9 @@ sub _n50fromHash {
     foreach my $s ( @sorted_keys ) {
         $tlen += $s * ${$hash_ref}{$s};
 
+     # N50 definition: https://en.wikipedia.org/wiki/N50_statistic
      # Was '>=' in my original implementation of N50. Now complies with 'seqkit'
+     # N50 Calculation
         return ($s, $min, $max) if ( $tlen > ( $total / 2 ) );
     }
 
@@ -271,14 +269,70 @@ sub jsonStats {
   my ($file) = @_;
   my $stats = getStats($file,  'JSON');
 
-  # Returns JSON object if it was possible to have ig
+
+  # Return JSON object if getStats() was able to reduce one
   if ($stats->{status} and $stats->{json}) {
     return $stats->{json}
   } else {
-    # Returns 'undef' otherwise
+    # Return undef otherwise
     return undef;
   }
 }
- 
+
+sub _readfq {
+    # _readfq(): Heng Li's FASTA/FASTQ parser
+    # Parameters:
+    # * FileHandle
+    # * Auxiliary array ref
+    my ( $fh, $aux ) = @_;
+    @$aux = [ undef, 0 ] if ( !(@$aux) );
+
+    # Parse FASTA/Q
+    return if ( $aux->[1] );
+    if ( !defined( $aux->[0] ) ) {
+        while (<$fh>) {
+            chomp;
+            # Sequence header > or @
+            if ( substr( $_, 0, 1 ) eq '>' || substr( $_, 0, 1 ) eq '@' ) {
+                $aux->[0] = $_;
+                last;
+            }
+        }
+        if ( !defined( $aux->[0] ) ) {
+            $aux->[1] = 1;
+            return;
+        }
+    }
+
+    my $name = '';
+    if ( defined $_ ) {
+        $name = /^.(\S+)/ ? $1 : '';
+    }
+
+    my $seq = '';
+    my $c;
+    $aux->[0] = undef;
+    while (<$fh>) {
+        chomp;
+        $c = substr( $_, 0, 1 );
+        last if ( $c eq '>' || $c eq '@' || $c eq '+' );
+        $seq .= $_;
+    }
+    $aux->[0] = $_;
+    $aux->[1] = 1 if ( !defined( $aux->[0] ) );
+    return ( $name, $seq ) if ( $c ne '+' );
+    my $qual = '';
+    while (<$fh>) {
+        chomp;
+        $qual .= $_;
+        if ( length($qual) >= length($seq) ) {
+            $aux->[0] = undef;
+            return ( $name, $seq, $qual );
+        }
+    }
+    $aux->[1] = 1;
+    return ( $name, $seq );
+}
+
 
 1;

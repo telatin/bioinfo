@@ -23,8 +23,8 @@ my $settings = Proch::Cmd->new(
 $settings->set_global('working_dir', '/hpc-home/telatina/tmp/');
 
 my $c1 = Proch::Cmd->new(
-		command => 'ls -lh /etc/passwd /etc/vimrc hello',
-		input_files => ['/etc/passwd' , '/etc/vimrc', 'hello'],
+		command => "ls $0",
+		input_files => ["$0" ],
 		output_files => [],
 		debug => 0,
 		verbose => 0,

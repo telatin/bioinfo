@@ -2,7 +2,7 @@
 # A script to calculate N50 from one or multiple FASTA/FASTQ files.
 #
 
-use 5.012;
+use 5.014;
 use warnings;
 use Pod::Usage;
 use Term::ANSIColor  qw(:constants colorvalid colored);
@@ -16,7 +16,7 @@ our %program = (
   'NAME'      => 'FASTx N50 CALCULATOR',
   'AUTHOR'    => 'Andrea Telatin',
   'MAIL'      => 'andrea.telatin@quadram.ac.uk',
-  'VERSION'   => '1.0',
+  'VERSION'   => '1.5',
 );
 my $hasJSON = eval {
 	require JSON;
@@ -32,12 +32,13 @@ my $opt_separator = "\t";
 my $opt_format = 'default';
 my %formats = (
   'default' => 'Prints only N50 for single file, TSV for multiple files',
-  'tsv'     => 'Tab separated output (file, seqs, total size, N50)',
+  'tsv'     => 'Tab separated output (file, seqs, total size, N50, min, max)',
   'full'    => 'Not implemented',
   'json'    => 'JSON (JavaScript Object Notation) output',
-  'short'   => 'Not Implemented',
+  'short'   => 'Not implemented',
   'csv'     => 'Alias for tsv',
   'custom'  => 'Custom format with --template STRING',
+  'screen'  => 'Screen friendly table (computer unfriendly)'
  );
 
 my ($opt_help,
@@ -49,6 +50,7 @@ my ($opt_help,
 	$opt_pretty,
 	$opt_basename,
 	$opt_template,
+  $opt_fullpath,
 );
 our $tab  = "\t";
 our $new  = "\n";
@@ -59,6 +61,7 @@ my $result = GetOptions(
     'n|nonewline'   => \$opt_nonewline,
     'j|noheader'    => \$opt_noheader,
     'b|basename'    => \$opt_basename,
+    'a|abspath'     => \$opt_fullpath,
     't|template=s'  => \$opt_template,
     'c|color'       => \$opt_color,
     'h|help'        => \$opt_help,
@@ -69,6 +72,29 @@ my $result = GetOptions(
 pod2usage({-exitval => 0, -verbose => 2}) if $opt_help;
 version() if defined $opt_version;
 
+# Added in 1.5. screen friendly format
+
+my $screen_table = format
+# Added in v1.5: list accepted output formats programmatically
+if ($opt_format eq 'list') {
+  say STDERR "AVAILABLE OUTPUT FORMATS:";
+  for my $f (sort keys %formats) {
+    # Use colors if allowed
+    if ($opt_color) {
+      print BOLD, $f, "\t";
+      # Print in RED unimplemented format
+      if ($formats{$f} eq 'Not implemented') {
+        say RED $formats{$f}, RESET;
+      } else {
+        say RESET, $formats{$f};
+      }
+    } else {
+      say "$f\t$formats{$f}";
+    }
+
+  }
+  exit;
+}
 if ( ($opt_format=~/json/i ) and (! $hasJSON) ) {
 	die "FATAL ERROR: Please install perl module JSON first [e.g. cpanm JSON]\n";
 }
@@ -110,6 +136,11 @@ foreach my $file (@ARGV) {
     next;
   }
   say Dumper $FileStats if ($opt_debug);
+  if (! $FileStats->{min}) {
+    say Dumper $FileStats;
+    say $Proch::N50::VERSION;
+    die;
+  }
   my $n50 = $FileStats->{N50};
   my $n   = $FileStats->{seqs};
   my $slen= $FileStats->{size};
@@ -120,6 +151,7 @@ foreach my $file (@ARGV) {
 	say STDERR "[$file]\tTotalSize:$slen;N50:$n50;Sequences:$n" if ($opt_debug);
 
 	$file = basename($file) if ($opt_basename);
+  $file = File::Spec->rel2abs($file) if ($opt_fullpath);
 	my %metrics = (
 		'seqs' => $n,
 		'N50'  => $n50,
@@ -154,13 +186,15 @@ if (not $opt_format or $opt_format eq 'default') {
 
 } elsif ($opt_format eq 'tsv' or $opt_format eq 'csv') {
   # TSV format
-	my @fields = ('path', 'seqs', 'size', 'N50');
+	my @fields = ('path', 'seqs', 'size', 'N50', 'min', 'max');
 	say '#', join($opt_separator, @fields) if (!defined $opt_noheader);
 
 	foreach my $r (keys %output_object) {
 		print $r,$opt_separator;
+
 		for (my $i = 1; $i <= $#fields; $i++) {
-			print $output_object{$r}{$fields[$i]};
+			print $output_object{$r}{$fields[$i]} if (defined $output_object{$r}{$fields[$i]});
+
 			if ( ($i == $#fields) and (not $opt_nonewline) ) {
 				print "\n";
 			} else {
@@ -276,11 +310,19 @@ sub readfq {
     return ($name, $seq);
 }
 
+sub swrite {
+  die "usage: swrite PICTURE ARGS" unless @_;
+  my $format = shift;
+  $^A = "";
+  formline($format,@_);
+  return $^A;
+}
+
 __END__
 
 =head1 NAME
 
-B<n50.pl> - A program to calculate N50 from FASTA/FASTQ files
+B<n50.pl> - A program to calculate N50, min and max length from FASTA/FASTQ files
 
 =head1 AUTHOR
 
@@ -288,10 +330,10 @@ Andrea Telatin <andrea.telatin@quadram.ac.uk>
 
 =head1 DESCRIPTION
 
-This program parses a list of FASTA/FASTQ files calculating for each one
-the number of sequences, the sum of sequences lengths and the N50.
-It will print the result in different formats, by default only the N50 is
-printed for a single file and all metrics in TSV format for multiple files.
+This program parses a list of FASTA/FASTQ files calculating for each one the
+number of sequences, the sum of sequences lengths and the N50.
+It will print the result in different formats, by default only the N50 is printed
+for a single file and all metrics in TSV format for multiple files.
 
 =head1 SYNOPSIS
 
@@ -304,20 +346,25 @@ n50.pl [options] [FILE1 FILE2 FILE3...]
 =item I<-f, --format>
 
 Output format: default, tsv, json, custom.
-See below for format specific switches.
+See below for format specific switches. Specify "list" to list available formats.
 
 =item I<-s, --separator>
 
 Separator to be used in 'tsv' output. Default: tab.
-The 'tsv' format will print a header line, followed
-by a line for each file given as input with: file path,
-as received, total number of sequences, total size in bp,
-and finally N50.
+The 'tsv' format will print a header line, followed by a line for each file
+given as input with: file path, as received, total number of sequences,
+total size in bp, and finally N50.
 
 =item I<-b, --basename>
 
 Instead of printing the path of each file, will only print
 the filename, stripping relative or absolute paths to it.
+
+=item I<-a, --abspath>
+
+Instead of printing the path of each file, as supplied by
+the user (can be relative), it will the absolute path.
+Will override -b (basename).
 
 =item I<-j, --noheader>
 
