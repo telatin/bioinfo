@@ -23,8 +23,8 @@ my $settings = Proch::Cmd->new(
 $settings->set_global('working_dir', '/hpc-home/telatina/tmp/');
 
 my $c1 = Proch::Cmd->new(
-		command => 'ls -lh /etc/passwd /etc/vimrc hello',
-		input_files => ['/etc/passwd' , '/etc/vimrc', 'hello'],
+		command => "ls -lh /etc/passwd $0",
+		input_files => ['/etc/passwd', "$0"],
 		output_files => [],
 		debug => 0,
 		verbose => 0,
@@ -39,6 +39,6 @@ my $simple = $c1->simplerun();
 my $data = $c2->simplerun();
 
 say $simple->{output};
-say 'C1 run again: ', $c1->simplerun()->{output};
+say 'C1 run again: ', Dumper $c1->simplerun();
 
  
