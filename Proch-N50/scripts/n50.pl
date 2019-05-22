@@ -1,7 +1,6 @@
 #!/usr/bin/env perl
 # A script to calculate N50 from one or multiple FASTA/FASTQ files.
 #
-
 use 5.014;
 use warnings;
 use Pod::Usage;
@@ -38,7 +37,7 @@ my %formats = (
   'short'   => 'Not implemented',
   'csv'     => 'Alias for tsv',
   'custom'  => 'Custom format with --template STRING',
-  'screen'  => 'Screen friendly table (computer unfriendly)'
+  'screen'  => 'Not implemented',
  );
 
 my ($opt_help,
@@ -72,9 +71,8 @@ my $result = GetOptions(
 pod2usage({-exitval => 0, -verbose => 2}) if $opt_help;
 version() if defined $opt_version;
 
-# Added in 1.5. screen friendly format
+# TODO Added in 1.5. screen friendly format
 
-my $screen_table = format
 # Added in v1.5: list accepted output formats programmatically
 if ($opt_format eq 'list') {
   say STDERR "AVAILABLE OUTPUT FORMATS:";

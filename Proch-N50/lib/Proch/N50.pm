@@ -4,7 +4,7 @@ package Proch::N50;
 use 5.014;
 use warnings;
 
-$Proch::N50::VERSION = '0.06';
+$Proch::N50::VERSION = '0.07';
 
 use JSON::PP;
 use FASTX::Reader;
@@ -150,14 +150,6 @@ Returns N50, min and max lengths.
 
 =back
 
-=head1 AUTHOR
-
-Andrea Telatin <andrea@telatin.com>, Quadram Institute Bioscience
-
-=head1 COPYRIGHT AND LICENSE
-
-This free software under MIT licence. No warranty, explicit or implicit, is provided.
-
 =cut
 
 sub getStats {
@@ -258,6 +250,7 @@ sub getN50 {
     my $stats = getStats($file);
 
     # Verify status and return
+    # uncoverable branch false
     if ( $stats->{status} ) {
         return $stats->{N50};
     } else {
@@ -271,6 +264,7 @@ sub jsonStats {
 
 
   # Return JSON object if getStats() was able to reduce one
+  # uncoverable branch false
   if ($stats->{status} and $stats->{json}) {
     return $stats->{json}
   } else {

@@ -12,9 +12,19 @@ if [ ! -e "$SOURCE" ]; then
 	exit 1
 else
 	set -euo pipefail;
-	echo -n "# Copying script: "
+	if [[ -e "$DEST" ]]; then
+		rm "$DEST";
+	fi
+
+	echo "# Copying script: "
 	sed 's|#~loclib~|use lib "$Bin/../lib";|' "$SOURCE" > "$DEST"
-	echo "OK"
+	echo "# OK"
 	echo "# Testing script:";
-	perl "$SCRIPTDIR/n50.pl" "$SCRIPTDIR/../data/"*.fa --format tsv
+	DATA=$(perl "$SCRIPTDIR/n50.pl" "$SCRIPTDIR/../data/"*.fa --format tsv)
+	if [[ $? -gt 0 ]]; then
+		exit 3;
+	else
+		echo "OK"
+		echo $DATA;
+	fi
 fi
