@@ -164,6 +164,7 @@ sub getStats {
     $answer->{N50}    = undef;
 
     # Check file existence
+# uncoverable condition right
     if ( !-e "$file" and $file ne '-' ) {
         $answer->{status}  = 0;
         $answer->{message} = "Unable to find <$file>";

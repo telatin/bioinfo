@@ -11,18 +11,15 @@ use FindBin qw($Bin);
 #~loclib~
 use Proch::N50;
 use Data::Dumper;
+use JSON::PP;
 our %program = (
   'NAME'      => 'FASTx N50 CALCULATOR',
   'AUTHOR'    => 'Andrea Telatin',
-  'MAIL'      => 'andrea.telatin@quadram.ac.uk',
+  'MAIL'      => 'andrea@telatin.com',
   'VERSION'   => '1.5',
 );
-my $hasJSON = eval {
-	require JSON;
-	JSON->import();
-	1;
-};
-
+my $hasJSON = undef;
+our $t;
 
 local $Term::ANSIColor::AUTORESET = 1;
 
@@ -37,7 +34,7 @@ my %formats = (
   'short'   => 'Not implemented',
   'csv'     => 'Alias for tsv',
   'custom'  => 'Custom format with --template STRING',
-  'screen'  => 'Not implemented',
+  'screen'  => 'Screen friendly table (requires Text::ASCIITable)',
  );
 
 my ($opt_help,
@@ -93,9 +90,7 @@ if ($opt_format eq 'list') {
   }
   exit;
 }
-if ( ($opt_format=~/json/i ) and (! $hasJSON) ) {
-	die "FATAL ERROR: Please install perl module JSON first [e.g. cpanm JSON]\n";
-}
+
 our %output_object;
 
 if (defined $opt_format) {
@@ -106,6 +101,31 @@ if (defined $opt_format) {
 		die " FATAL ERROR:\n Output format not valid (--format '$opt_format').\n Use one of the following: " .
 			join(', ',@list) . ".\n";
 	}
+
+  # IMPORT JSON ONLY IF NEEDED
+  if ($opt_format eq 'json') {
+
+    $hasJSON = eval {
+    	require JSON;
+    	JSON->import();
+     	1;
+    };
+    die "FATAL ERROR: Please install perl module JSON first [e.g. cpanm JSON]\n" unless ($hasJSON);
+  }
+
+  # IMPORT ASCII TABLE ONLY IF NEEDE
+  if ($opt_format eq 'screen') {
+    my $has_table = eval {
+      require Text::ASCIITable;
+      Text::ASCIITable->import();
+      $t = Text::ASCIITable->new();
+      $t->setCols('File','Seqs', 'Total bp','N50', 'min', 'max');
+      1;
+    };
+    if (! $has_table) {
+      die "ERROR:\nFormat 'screen' requires Text::ASCIITable installed.\n";
+    }
+  }
 
 	if ($formats{$opt_format} eq 'Not implemented') {
 		print STDERR " WARNING: Format '$opt_format' not implemented yet. Switching to 'tsv'.\n";
@@ -144,6 +164,7 @@ foreach my $file (@ARGV) {
   my $slen= $FileStats->{size};
   my $min = $FileStats->{min};
   my $max = $FileStats->{max};
+
 
 
 	say STDERR "[$file]\tTotalSize:$slen;N50:$n50;Sequences:$n" if ($opt_debug);
@@ -211,6 +232,18 @@ if (not $opt_format or $opt_format eq 'default') {
 		$output_string =~s/{path}/$r/g;
 		print $output_string;
 	}
+} elsif ($opt_format eq 'screen' ) {
+
+  my @fields = ('path', 'seqs', 'size', 'N50', 'min', 'max');
+	foreach my $r (keys %output_object) {
+		my @array;
+    push(@array, $r);
+		for (my $i = 1; $i <= $#fields; $i++) {
+			push(@array, $output_object{$r}{$fields[$i]}) if (defined $output_object{$r}{$fields[$i]});
+		}
+    $t->addRow(@array);
+	}
+  print $t;
 }
 
 
@@ -324,7 +357,7 @@ B<n50.pl> - A program to calculate N50, min and max length from FASTA/FASTQ file
 
 =head1 AUTHOR
 
-Andrea Telatin <andrea.telatin@quadram.ac.uk>
+Andrea Telatin <andrea@telatin.com>
 
 =head1 DESCRIPTION
 
@@ -343,7 +376,7 @@ n50.pl [options] [FILE1 FILE2 FILE3...]
 
 =item I<-f, --format>
 
-Output format: default, tsv, json, custom.
+Output format: default, tsv, json, custom, screen.
 See below for format specific switches. Specify "list" to list available formats.
 
 =item I<-s, --separator>
@@ -405,6 +438,49 @@ in pretty print mode. Example:
 
 Will display this full help message and quit, even if other
 arguments are supplied.
+
+=back
+
+=head2 Output formats
+
+=over 4
+
+=item I<tsv> (tab separated values)
+
+  #path    seqs 	size	N50	min	max
+  test.fa	  8	 825	189	4	256
+  reads.fa	  5	 247	100	6	102
+  small_test.fa 	6	130	65	4	65
+
+=item I<screen> (screen friendly)
+
+  .-----------------------------------------------------------.
+  | File               | Seqs  | Total bp | N50  | min | max  |
+  +--------------------+-------+----------+------+-----+------+
+  | test_fasta_grep.fa |     1 |       80 |   80 |  80 |   80 |
+  | small_test.fa      |     6 |      130 |   65 |   4 |   65 |
+  | rdp_16s_v16.fa     | 13212 | 19098167 | 1467 | 320 | 2210 |
+  '--------------------+-------+----------+------+-----+------'
+
+=item I<json> (JSON)
+
+
+  {
+    "small_test.fa" : {
+       "max" : "65",
+       "N50" : "65",
+       "seqs" : 6,
+       "size" : 130,
+       "min" : "4"
+    },
+    "rdp_16s_v16.fa" : {
+       "seqs" : 13212,
+       "N50" : "1467",
+       "max" : "2210",
+       "min" : "320",
+        "size" : 19098167
+    }
+  }
 
 =back
 

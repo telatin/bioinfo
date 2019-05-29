@@ -1,6 +1,7 @@
 0.09	2019-05-29
 	* Added ./bin directory to provide excutable scripts
 	* n50.pl now accepts sequence with zero length (as seqkit)
+	* n50.pl new output format (screen friendly)
 	* Coverage directives for Devel::Coverage
 	* Extensive test 
 

@@ -16,7 +16,7 @@ use File::Basename;
 our %program = (
   'NAME'      => 'FASTx N50 CALCULATOR',
   'AUTHOR'    => 'Andrea Telatin',
-  'MAIL'      => 'andrea.telatin@quadram.ac.uk',
+  'MAIL'      => 'andrea@telatin.com',
   'VERSION'   => '1.1',
 );
 
@@ -282,7 +282,7 @@ as template for Proch::N50 [n50_algorithm.pl]
 
 =head1 AUTHOR
 
-Andrea Telatin <andrea.telatin@quadram.ac.uk>
+Andrea Telatin <andrea@telatin.com>
 
 =head1 DESCRIPTION
 

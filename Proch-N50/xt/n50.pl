@@ -14,7 +14,7 @@ use Data::Dumper;
 our %program = (
   'NAME'      => 'FASTx N50 CALCULATOR',
   'AUTHOR'    => 'Andrea Telatin',
-  'MAIL'      => 'andrea.telatin@quadram.ac.uk',
+  'MAIL'      => 'andrea@telatin.com',
   'VERSION'   => '1.5',
 );
 my $hasJSON = eval {
@@ -324,7 +324,7 @@ B<n50.pl> - A program to calculate N50, min and max length from FASTA/FASTQ file
 
 =head1 AUTHOR
 
-Andrea Telatin <andrea.telatin@quadram.ac.uk>
+Andrea Telatin <andrea@telatin.com>
 
 =head1 DESCRIPTION
 
