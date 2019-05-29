@@ -169,7 +169,7 @@ sub getStats {
         $answer->{message} = "Unable to find <$file>";
     }
 
-    
+
 
     # Return failed status if file not found or not readable
     if ( $answer->{status} == 0 ) {
@@ -249,8 +249,8 @@ sub getN50 {
     my ($file) = @_;
     my $stats = getStats($file);
 
-    # Verify status and return
-    # uncoverable branch false
+# Verify status and return
+# uncoverable branch false
     if ( $stats->{status} ) {
         return $stats->{N50};
     } else {
@@ -263,8 +263,8 @@ sub jsonStats {
   my $stats = getStats($file,  'JSON');
 
 
-  # Return JSON object if getStats() was able to reduce one
-  # uncoverable branch false
+# Return JSON object if getStats() was able to reduce one
+# uncoverable branch false
   if ($stats->{status} and $stats->{json}) {
     return $stats->{json}
   } else {
@@ -273,60 +273,62 @@ sub jsonStats {
   }
 }
 
-sub _readfq {
-    # _readfq(): Heng Li's FASTA/FASTQ parser
-    # Parameters:
-    # * FileHandle
-    # * Auxiliary array ref
-    my ( $fh, $aux ) = @_;
-    @$aux = [ undef, 0 ] if ( !(@$aux) );
+# NOW READFQ IS PROVIDED BY: 'FASTX::Reader'
 
-    # Parse FASTA/Q
-    return if ( $aux->[1] );
-    if ( !defined( $aux->[0] ) ) {
-        while (<$fh>) {
-            chomp;
-            # Sequence header > or @
-            if ( substr( $_, 0, 1 ) eq '>' || substr( $_, 0, 1 ) eq '@' ) {
-                $aux->[0] = $_;
-                last;
-            }
-        }
-        if ( !defined( $aux->[0] ) ) {
-            $aux->[1] = 1;
-            return;
-        }
-    }
-
-    my $name = '';
-    if ( defined $_ ) {
-        $name = /^.(\S+)/ ? $1 : '';
-    }
-
-    my $seq = '';
-    my $c;
-    $aux->[0] = undef;
-    while (<$fh>) {
-        chomp;
-        $c = substr( $_, 0, 1 );
-        last if ( $c eq '>' || $c eq '@' || $c eq '+' );
-        $seq .= $_;
-    }
-    $aux->[0] = $_;
-    $aux->[1] = 1 if ( !defined( $aux->[0] ) );
-    return ( $name, $seq ) if ( $c ne '+' );
-    my $qual = '';
-    while (<$fh>) {
-        chomp;
-        $qual .= $_;
-        if ( length($qual) >= length($seq) ) {
-            $aux->[0] = undef;
-            return ( $name, $seq, $qual );
-        }
-    }
-    $aux->[1] = 1;
-    return ( $name, $seq );
-}
+# sub _readfq {
+#     # _readfq(): Heng Li's FASTA/FASTQ parser
+#     # Parameters:
+#     # * FileHandle
+#     # * Auxiliary array ref
+#     my ( $fh, $aux ) = @_;
+#     @$aux = [ undef, 0 ] if ( !(@$aux) );
+#
+#     # Parse FASTA/Q
+#     return if ( $aux->[1] );
+#     if ( !defined( $aux->[0] ) ) {
+#         while (<$fh>) {
+#             chomp;
+#             # Sequence header > or @
+#             if ( substr( $_, 0, 1 ) eq '>' || substr( $_, 0, 1 ) eq '@' ) {
+#                 $aux->[0] = $_;
+#                 last;
+#             }
+#         }
+#         if ( !defined( $aux->[0] ) ) {
+#             $aux->[1] = 1;
+#             return;
+#         }
+#     }
+#
+#     my $name = '';
+#     if ( defined $_ ) {
+#         $name = /^.(\S+)/ ? $1 : '';
+#     }
+#
+#     my $seq = '';
+#     my $c;
+#     $aux->[0] = undef;
+#     while (<$fh>) {
+#         chomp;
+#         $c = substr( $_, 0, 1 );
+#         last if ( $c eq '>' || $c eq '@' || $c eq '+' );
+#         $seq .= $_;
+#     }
+#     $aux->[0] = $_;
+#     $aux->[1] = 1 if ( !defined( $aux->[0] ) );
+#     return ( $name, $seq ) if ( $c ne '+' );
+#     my $qual = '';
+#     while (<$fh>) {
+#         chomp;
+#         $qual .= $_;
+#         if ( length($qual) >= length($seq) ) {
+#             $aux->[0] = undef;
+#             return ( $name, $seq, $qual );
+#         }
+#     }
+#     $aux->[1] = 1;
+#     return ( $name, $seq );
+# }
 
 
 1;
