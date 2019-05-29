@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# A script to calculate N50 from one or multiple FASTA/FASTQ files.
-#
+# ABSTRACT: A script to calculate N50 from one or multiple FASTA/FASTQ files.
+# PODNAME: n50.pl
 use 5.014;
 use warnings;
 use Pod::Usage;
@@ -134,7 +134,7 @@ foreach my $file (@ARGV) {
     next;
   }
   say Dumper $FileStats if ($opt_debug);
-  if (! $FileStats->{min}) {
+  if (! defined $FileStats->{min}) {
     say Dumper $FileStats;
     say $Proch::N50::VERSION;
     die;

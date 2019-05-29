@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# This script copies scripts/n50.pl - the main script using Proch::N50,
+# This script copies bin/n50.pl - the main script using Proch::N50,
 # in ./xt/ but using the local copy of Proch::50 instead of the system installed one
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-SOURCE="$SCRIPTDIR/../scripts/n50.pl"
+SOURCE="$SCRIPTDIR/../bin/n50.pl"
 DEST="$SCRIPTDIR/n50.pl"
 
 if [ ! -e "$SOURCE" ]; then

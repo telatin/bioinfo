@@ -1,10 +1,10 @@
 package Proch::N50;
-#ABSTRACT: a small module to calculate N50 (total size, and total number of sequences) for a FASTA or FASTQ file. It's small and without dependencies.
+#ABSTRACT: a small module to calculate N50 (total size, and total number of sequences) for a FASTA or FASTQ file. It's easy to install, with minimal dependencies.
 
 use 5.014;
 use warnings;
 
-$Proch::N50::VERSION = '0.08';
+$Proch::N50::VERSION = '0.09';
 
 use JSON::PP;
 use FASTX::Reader;
