@@ -44,8 +44,11 @@ our @EXPORT = qw(getStats getN50 jsonStats);
   #    "seqs" : 6,
   #    <...>
   #    "filename" : "small_test.fa",
-  #    "N50" : "65",
+  #    "N50" : 65,
   # }
+  # Directly ask for the JSON object only:
+  my $json = jsonStats($filepath);
+  print $json; 
 
 =head1 METHODS
 
@@ -138,15 +141,35 @@ Returns N50, min and max lengths.
 
 =head1 Dependencies
 
+=head2 Module (N50.pm)
+
 =over 4
 
-=item L<JSON::PP> (core)
+=item L<JSON::PP> (core module, required)
+
+=back
+
+=head2 Implementation (n50.pl)
+
+=over 4
+
+=item L<Term::ANSIColor> 
 
 =back
 
 =over 4
 
-=item L<Term::ANSIColor> (optional)  for the n50.pl script
+=item L<JSON>
+
+(optional) when using C<--format JSON>
+
+=back
+
+=over 4
+
+=item L<Text::ASCIITable>
+
+(optional) when using C<--format screen>. This might be substituted by a different module in the future.
 
 =back
 

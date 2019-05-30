@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 # ABSTRACT: A script to calculate N50 from one or multiple FASTA/FASTQ files.
 # PODNAME: n50.pl
+
 use 5.014;
 use warnings;
 use Pod::Usage;
