@@ -16,7 +16,7 @@ else
 		rm "$DEST";
 	fi
 
-	echo "# Copying script: "
+	echo "# Copying script $SOURCE to $DEST: "
 	sed 's|#~loclib~|use lib "$Bin/../lib";|' "$SOURCE" > "$DEST"
 	echo "# OK"
 	echo "# Testing script:";
