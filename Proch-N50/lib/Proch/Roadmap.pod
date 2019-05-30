@@ -73,7 +73,7 @@ expanded set of statistics [includes quantiles]
 
 =item *
 
-updated n50.pl script to add new statistics, but backward compatible
+rewritten n50.pl script with new statistics and output formats
 
 =back
 

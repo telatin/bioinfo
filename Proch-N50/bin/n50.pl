@@ -11,7 +11,6 @@ use FindBin qw($Bin);
 #~loclib~
 use Proch::N50;
 use Data::Dumper;
-use JSON::PP;
 our %program = (
   'NAME'      => 'FASTx N50 CALCULATOR',
   'AUTHOR'    => 'Andrea Telatin',

@@ -200,9 +200,9 @@ sub getStats {
 
     my $basename = basename($file);
 
-    $answer->{N50}      = $n50;
-    $answer->{min}      = $min;
-    $answer->{max}      = $max;
+    $answer->{N50}      = $n50 + 0;
+    $answer->{min}      = $min + 0;
+    $answer->{max}      = $max + 0;
     $answer->{seqs}     = $n;
     $answer->{size}     = $slen;
     $answer->{filename} = $basename;
