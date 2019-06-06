@@ -1,0 +1,2 @@
+#path	seqs	size	N50	min	max
+/git/hub/bioinfo/Proch-N50/xt/../data/test.fa	8	825	189	4	256

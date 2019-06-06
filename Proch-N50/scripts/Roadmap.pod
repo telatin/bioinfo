@@ -41,7 +41,7 @@ Increase test coverage
 
 =item *
 
-Ensure 100% PASS in test grid
+Aim at 100% PASS in test grid
 
 =back
 

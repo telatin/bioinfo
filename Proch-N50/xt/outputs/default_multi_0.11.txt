@@ -1,0 +1,2 @@
+/git/hub/bioinfo/Proch-N50/xt/../data/test.fa	189
+/git/hub/bioinfo/Proch-N50/xt/../data/small_test.fa	65

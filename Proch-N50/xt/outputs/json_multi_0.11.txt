@@ -1,0 +1,17 @@
+{
+   "/git/hub/bioinfo/Proch-N50/xt/../data/small_test.fa" : {
+      "N50" : 65,
+      "size" : 130,
+      "max" : 65,
+      "seqs" : 6,
+      "min" : 4
+   },
+   "/git/hub/bioinfo/Proch-N50/xt/../data/test.fa" : {
+      "min" : 4,
+      "N50" : 189,
+      "max" : 256,
+      "size" : 825,
+      "seqs" : 8
+   }
+}
+

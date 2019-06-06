@@ -4,7 +4,7 @@ package Proch::N50;
 use 5.014;
 use warnings;
 
-$Proch::N50::VERSION = '0.09';
+$Proch::N50::VERSION = '0.11';
 
 use JSON::PP;
 use FASTX::Reader;
@@ -286,10 +286,9 @@ sub jsonStats {
   my ($file) = @_;
   my $stats = getStats($file,  'JSON');
 
-
 # Return JSON object if getStats() was able to reduce one
 # uncoverable branch false
-  if ($stats->{status} and $stats->{json}) {
+  if (defined $stats->{json}) {
     return $stats->{json}
   } else {
     # Return undef otherwise
