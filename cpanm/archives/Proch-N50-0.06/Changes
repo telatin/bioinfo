@@ -1,0 +1,52 @@
+0.06	2019-05-15
+	* Moved version check to release tests
+
+0.05	2019-05-09
+	* Code updated
+	* Transition to FASTX::Reader to parse FASTA file
+	* Improving documentation coverage
+	* Feature freeze aiming to release v 0.1 stable
+	
+0.04	2019-05-06
+	* Transition to JSON::PP, now required since its a core module
+	* Updated POD documentation
+	* Updated JSON tests
+	* Resubmitted as v 0.040 (PAUSE upload problem)
+
+0.039	2019-05-05
+	* Added 'min' and 'max' (lengths) in returned stats
+	* Updated requirements specs in YML distribution file
+
+0.032	2019-05-04
+	* JSON unit test: restored conditional test
+	* Removed unnecessary files from distribution (Dist::Zilla::Plugin::VersionFromModule/)
+
+0.031	2019-05-03
+	* Removed JSON unit test: this module has been built to only optionally require it. Even unit tests can have bugs.
+
+0.03	2019-05-02
+	* Added method _getJsonStats()_ to directly receive JSON string
+	* Expanded json unit test accordingly
+
+0.023	2019-05-01
+	* Updated dist.ini [Dist::Zilla::Role::ModuleMetadata]
+	* Synopsis uses print instead of say
+	* Added CPAN distribution tests (CPAN Version check, POD integrity, Changes, Kwalitee...)
+	* Added unit tests for getStats() and getStats with JSON
+
+0.022	2019-05-01
+	* Improved POD documentation
+	* Fixed name in n50_algorithm.pl
+
+0.021	2019-05-01
+	* Improved POD documentation
+	* Added a demo implementation of n50.pl using Proch::N50, keeping n50_algorithm.pl that does the same but without Proch::N50
+
+0.02	2019-04-30
+	* Added this Changelog
+	* Removed unnecessary variables
+	* Fixed POD documentation
+	- TODO: Bareword filehandle: currently used as readfq() needs it
+
+0.01	2019-04-30
+	* Initial release on CPAN
