@@ -1,21 +1,13 @@
 package Proch::Cmd;
 use 5.012;
 use warnings;
-$Proch::Cmd::VERSION = 0.007;
+$Proch::Cmd::VERSION = 0.01;
 
 # ABSTRACT: Execute shell commands with caching capability to store output of executed programs (useful for multi step pipelines where some steps can take long) {beta}
 
 =pod
 
 =encoding UTF-8
-
-=head1 NAME
-
-Proch::Cmd - Execute shell commands controlling inputs and outputs
-
-=head1 VERSION
-
-version 0.0041
 
 =head1 SYNOPSIS
 
@@ -100,16 +92,6 @@ Returns the value of a setting given its name ('Attribute')
 =head2 set_global('Attribute', 'Value')
 
 Set the value of a setting item, given its name ('Attribute')
-
-
-=head1 ACCESSORY SCRIPTS
-
-The 'scripts' directory contain a I<read_cache_files.pl> that can be used to display the
-content of this module's cache files. The 'data' directory contain a valid example of data
-file called 'data.ok'. To view its content:
-
-  perl scripts/read_cache_files.pl -f data/data.ok
-
 
 =cut
 
@@ -371,5 +353,15 @@ sub set_global {
 }
 
 
+
+=head1 ACCESSORY SCRIPTS
+
+The 'scripts' directory contain a I<read_cache_files.pl> that can be used to display the
+content of this module's cache files. The 'data' directory contain a valid example of data
+file called 'data.ok'. To view its content:
+
+  perl scripts/read_cache_files.pl -f data/data.ok
+
+=cut
 
 1;

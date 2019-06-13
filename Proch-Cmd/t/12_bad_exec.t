@@ -12,11 +12,11 @@ my $command = Proch::Cmd->new(
 
 SKIP: {
 
-    skip "wrong version", 2 if ( $^O ne 'linux' and $^O ne 'darwin' );
+    skip "wrong version", 2 if ( $^O eq 'MSWin32' );
     my $output = $command->simplerun();
 
     ok($output->{exit_code} != 0, "CMD [...] returned error");
-    ok(length($output->{output}) == 0, "CMD returned no output");
+    ok(! defined $output->{output}, "CMD returned no output");
 };
 
 done_testing();
