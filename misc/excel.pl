@@ -6,25 +6,28 @@ use Excel::Writer::XLSX;
 use Excel::Writer::XLSX::Utility;
 say ">Preparing a simple Excel file testing the module $Bin/excel_demo.xlsx";
 
+# Create new XLSX file
 my $workbook = Excel::Writer::XLSX->new("$Bin/excel_demo.xlsx" );
  
+# Add new sheets
 my $sheet1 = $workbook->add_worksheet('Validate_User_Input');
 my $sheet2 = $workbook->add_worksheet('Protected');
 
-# Protect the worksheet
+# Protect the worksheet operating with the $sheet_object
 $sheet2->protect();
 
-#  Add and define a format
+#  Add and define a format -> $format
 my $format = $workbook->add_format();
-$format->set_bold();
-$format->set_color( 'blue' );
-$format->set_align( 'center' );
+   $format->set_bold();
+   $format->set_color( 'blue' );
+   $format->set_align( 'center' );
  
-#METADATA
+# METADATA: Add metadata to the file
 $workbook->set_custom_property( 'Title',      'LOTUS 2.0 DATASHEET',     'text'   );
 $workbook->set_custom_property( 'Checked by',      'LOTUS 2.0',          'text'   );
 $workbook->set_custom_property( 'Date completed','2019-12-12T23:00:00Z', 'date'   );
 
+# Excel/Windows readable metadata:
 $workbook->set_properties(
     title    => 'LOTUS 2.0',
     author   => 'UserName?',
