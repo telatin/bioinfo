@@ -1,44 +1,51 @@
 #!/usr/bin/env perl
 use 5.016;
-
+$SIG{TERM} = $SIG{INT} = $SIG{QUIT} = $SIG{HUP} = sub {
+    print STDERR color('red bold'), "Exiting from micro16\n", color('reset'), "Unexpected error\n$_ $?"; die; };
 # If a dependency is found in ScriptDir/tools/ that copy will be used!
 my $dependencies = {
 	'u10' => {
 			binary => 'usearch_10',
-			test   => 'usearch_10',
+			test   => '{binary}',
 			check  => 'usearch v10',
 			message=> 'Please, place USEARCH v10 binary named "usearch_10" in your path or in the /tools subdirectory of this script',
 		},
 	'seqkit' => {
 			binary => 'seqkit',
-			test   => 'seqkit stats --help',
+			test   => '{binary} stats --help',
 			check  => 'output in machine-friendly tabular format',
 		},
-	'mapvalidate' => {
-			binary => 'validate_mapping_file.py',
-			test   => 'validate_mapping_file.py --help',
-			check  => 'Usage: validate_mapping_file.py',
-			message => 'Qiime 1.9 should be installed and available',
-	}
+    # 'q2' => {
+    #   binary => 'qiime',
+    #   test => '{binary} --version',
+    #   check => 'q2cli',
+    # },
+	# 'mapvalidate' => {
+	# 		binary => 'validate_mapping_file.py',
+	# 		test   => '{binary} --help',
+	# 		check  => 'Usage: validate_mapping_file.py',
+	# 		message => 'Qiime 1.9 should be installed and available',
+	# }
 
 };
 
 
 
-require bioProch;
 use File::Basename;
 use Term::ANSIColor;
 #local $Term::ANSIColor::AUTORESET = 1;
 use Storable;
 use Getopt::Long;
 use File::Spec;
-use Data::Dumper; 
+
 $Data::Dumper::Terse = 1;
 use Time::Piece;
-use Time::HiRes qw(gettimeofday tv_intervalclock_gettime clock_getres);
+use Time::HiRes qw(gettimeofday tv_interval clock_gettime clock_getres);
 use Digest::MD5 qw(md5 md5_hex md5_base64);
 use Storable qw(nstore store_fd nstore_fd freeze thaw dclone);
 
+use Data::Dump::Color;
+$Data::Dump::Color::INDEX = 0;
 our $script_dir;
 our $db;
 my $opt_metadata;
@@ -64,14 +71,14 @@ sub usage {
  -----------------------------------------------------------------------
 
    -i, --input-dir DIR
-            Input directory containing paired end FASTQ files 
+            Input directory containing paired end FASTQ files
 
    -m, --metadata  FILE
             File with sample properties, in Qiime format
 
    --fortag STRING and  --revtag STRING
    				Separator indicating reads strand. Default _R1, _R2
- 
+
    -o, --output-dir DIR
    				Output directory. Default: $opt_output_dir
 
@@ -80,7 +87,7 @@ sub usage {
 
    --min-merged INT
                 Minimum number of sequences merged [$opt_min_merged_seqs]
- -----------------------------------------------------------------------   				
+ -----------------------------------------------------------------------
 END
 }
 my $GetOptions = GetOptions(
@@ -99,7 +106,10 @@ my $GetOptions = GetOptions(
 	'repeat'             => \$opt_force_recalculate,
 	'nocolor'            => \$opt_nocolor,
 );
-
+if ($opt_nocolor) {
+  $Data::Dump::Color::COLOR = 0;
+  $ENV{'NO_COLOR'} = 1;
+}
 our $dep = init($dependencies);
 $db = "$script_dir/db/rdp_16s_v16.fa" unless (defined $db);
 die " FATAL ERROR: Database not found <$db>\n" unless (-e "$db");
@@ -121,16 +131,17 @@ while (my $filename = readdir(DIR) ) {
 			'command'     => qq(gunzip "$opt_input_dir/$filename"),
 			'can_fail'    => 0,
 		});
+    $filename =~s/.gz$//;
 
 	} elsif ($filename !~/q$/) {
-		deb("Skipping $filename: not a FASTQ file");
+		deb("Skipping $filename: not a FASTQ file") if (! -d "$filename");
 		next;
 	}
 
 	my ($basename) = split /$opt_fortag|$opt_revtag/, $filename;
 	my $strand = $opt_fortag;
 	$strand = $opt_revtag if ($filename =~/$opt_revtag/);
-	
+
 	if (defined $reads{$basename}{$strand}) {
 		die "FATAL ERROR: There is already a sample labelled <$basename> [$strand]!\n $reads{$basename}{$strand} is conflicting with $filename"
 	} else {
@@ -145,7 +156,7 @@ foreach my $b (sort keys %reads) {
 	if (defined $reads{$b}{$opt_fortag} and defined $reads{$b}{$opt_revtag}) {
 		ver(" - $b", 'bold yellow');
 	} else {
-		 
+
 		die "FATAL ERROR: Sample '$b' is missing one of the pair ends: only $reads{$b}{$opt_fortag}$reads{$b}{$opt_revtag} found";
 	}
 
@@ -156,7 +167,7 @@ foreach my $b (sort keys %reads) {
 		'count_seqs'  => "$merged",
 		'min_seqs'    => $opt_min_merged_seqs,
 	});
-	
+
 	# my $count = count_seqs("$merged");
 	# say STDERR Dumper $count;
 	# die;
@@ -234,7 +245,7 @@ run({
 for my $otus ($all_otus, $all_zotus) {
 	my $tag = 'OTUs';
 	$tag = 'ASVs' if ($otus =~/asv/i);
-	
+
 	my $otutabraw   = qq("$opt_output_dir"/${tag}_tab.raw);
 	my $otutab      = qq("$opt_output_dir"/${tag}_tab.txt);
 	my $alpha       = qq("$opt_output_dir"/${tag}_alpha.txt);
@@ -261,7 +272,7 @@ for my $otus ($all_otus, $all_zotus) {
 		'outfile'     => $otutab,
 		'savelog'     => "$otutab.log",
 	});
-	
+
 
 
 	# Alpha diversity
@@ -271,7 +282,7 @@ for my $otus ($all_otus, $all_zotus) {
 		'outfile'     => $alpha,
 		'savelog'     => "$alpha.log",
 	});
- 
+
 	# Make OTU tree
 	run({
 		'command' => qq($dep->{u10}->{binary}  -cluster_agg "$otus" -treeout "$tree"),
@@ -359,7 +370,7 @@ sub run {
 		return $run_ref;
 	}
 	$run_ref->{description} = substr($run_ref->{command}, 0, 12) . '...' if (! $run_ref->{description});
-	
+
 
 	# Save program output?
 	my $savelog = ' 2> /dev/null ';
@@ -380,7 +391,7 @@ sub run {
 	if ($?) {
 		deb(" - Execution failed: $?");
 		if (! $run_ref->{can_fail}) {
-			say STDERR color('red'), Dumper $run_ref;
+			say STDERR color('red'), Dumper $run_ref, color('reset');
 			die " FATAL ERROR:\n Program failed and returned $?.\n Program: $run_ref->{description}\n Command: $run_ref->{command}";
 		} else {
 			ver("Command failed, but it's tolerated [$run_ref->{description}]") unless ($run_ref->{no_messages});
@@ -404,16 +415,16 @@ sub run {
 			die "FATAL ERROR: File <$run_ref->{count_seqs} has only $count->{seq_number} sequences, after executing $run_ref->{description}\n";
 		}
 	}
-	
+
 	my $elapsed_time = tv_interval ( $start_time, [gettimeofday]);
 	$run_ref->{elapsed} = $elapsed_time;
-	
+
 	die unless defined $run_ref->{exitcode};
-	
+
 	if (! defined $run_ref->{nocache}) {
 		deb("Caching result $run_ref->{elapsed}");
 		nstore $run_ref, "$run_ref->{md5}" || die " FATAL ERROR:\n Unable to write log information to '$run_ref->{md5}'.\n";
-	} 
+	}
 
 	if ($opt_debug) {
 		deb_dump($run_ref);
@@ -434,24 +445,42 @@ sub init {
 		die "FATAL ERROR: Input directory (-i INPUT_DIR) not found: <$opt_input_dir>\n";
 	}
 
-	
+
 	foreach my $key ( keys %{ $dep_ref } ) {
 		if (-e "$script_dir/tools/${ $dep_ref }{$key}->{binary}") {
 			${ $dep_ref }{$key}->{binary} = "$script_dir/tools/${ $dep_ref }{$key}->{binary}";
 		}
-		my $cmd = qq(${ $dep_ref }{$key}->{"test"} |& grep "${ $dep_ref }{$key}->{"check"}");
-		run({
+
+		my $test_cmd = qq(${ $dep_ref }{$key}->{"test"});
+		$test_cmd =~s/{binary}/${ $dep_ref }{$key}->{binary}/g;
+		my $cmd = qq($test_cmd 2>&1 | grep "${ $dep_ref }{$key}->{"check"}");
+		my $check = run({
 			'command' => $cmd,
 			'description' => qq(Checking dependency: <${ $dep_ref }{$key}->{"binary"}>),
-			'can_fail'    => 0,
+			'can_fail'    => 1,
 			'nocache'     => 1,
 		});
+		if ($check->{exitcode} > 0) {
+		  print STDERR color('red'), "Warning: ", color('reset'), ${ $dep_ref }{$key}->{binary}, ' not found in $PATH, trying local binary', "\n" if ($opt_debug);
+      ${ $dep_ref }{$key}->{binary} = "$script_dir/bin/" . ${ $dep_ref }{$key}->{binary};
+
+			my $test_cmd = qq(${ $dep_ref }{$key}->{"test"});
+			$test_cmd =~s/{binary}/${ $dep_ref }{$key}->{binary}/g;
+			my $cmd = qq($test_cmd 2>&1 | grep "${ $dep_ref }{$key}->{"check"}");
+			run({
+                        'command' => $cmd,
+                        'description' => qq(Checking dependency: <${ $dep_ref }{$key}->{"binary"}>),
+                        'can_fail'    => 0,
+                        'nocache'     => 1,
+                	});
+		}
+
 
 	}
 
 	return $dep_ref;
 }
- 
+
 
 sub crash {
 	die $_[0];
@@ -459,13 +488,14 @@ sub crash {
 
 sub deb_dump {
 	my $ref = shift @_;
-	unless ($opt_nocolor) {
-		print STDERR color('cyan'), "";
-	}
-	say STDERR Dumper $ref if ($opt_debug);
-	unless ($opt_nocolor) {
-		print STDERR color('reset'), "";
-	}	
+  dd $ref;
+	# if (! $opt_nocolor) {
+  #   		print STDERR color('cyan'), "";
+	# }
+	# say STDERR Dumper $ref if ($opt_debug);
+	# if (! $opt_nocolor) {
+	# 	print STDERR color('reset'), "";
+	# }
 }
 sub deb {
 	my ($message, $color) = @_;
@@ -485,7 +515,7 @@ sub ver {
 	unless ($opt_nocolor) {
 		print STDERR color($color), "";
 	}
-	say STDERR "$message" if ($opt_debug or $opt_verbose);	
+	say STDERR "$message" if ($opt_debug or $opt_verbose);
 
 	unless ($opt_nocolor) {
 		print STDERR color('reset'), "";
@@ -506,7 +536,7 @@ sub count_seqs {
 		#file    format  type    num_seqs        sum_len min_len avg_len max_len
 		#file    format  type    num_seqs        sum_len min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)
 		my $file_stats = run({
-			command 	=> qq(seqkit stats $all --tabular "$filename" | grep '[0-9]'),
+			command 	=> qq(seqkit stats $all --tabular "$filename" | grep -v 'avg_len'),
 			description => "Counting sequence number of $filename with 'seqkit'",
 			can_fail    => 0,
 			no_messages => 1,
@@ -523,7 +553,7 @@ sub count_seqs {
 		$output->{max_len}    = $fields[7];
 		if (defined $calculate_n50) {
 			$output->{sum_gap} = $fields[11];
-			$output->{N50} = $fields[12]; 
+			$output->{N50} = $fields[12];
 		}
 		return $output;
 	}
@@ -549,4 +579,3 @@ sub makedir {
 	}
 }
 __END__
- 
