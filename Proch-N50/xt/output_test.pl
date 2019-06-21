@@ -15,10 +15,10 @@ my $overwrite = 1;
 say color('green bold'), "TESTING $v", color('reset');
 my @input = ("$Bin/../data/test.fa", "$Bin/../data/small_test.fa  $Bin/../data/test.fa");
 my %params = (
-	'default'             => '',
-	'json'   	      => '--format json',
-	'tsv by size',        => '--format tsv -o size',
-	'screen by rev name ' => '--format screen -o path -r',
+	'default'             => '-b',
+	'json'   	      => '-b --format json',
+	'tsv by size',        => '-b --format tsv -o size',
+	'screen by rev name ' => '-b --format screen -o path -r',
 );
 
 foreach my $p (sort keys %params) {
