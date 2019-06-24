@@ -1,0 +1,72 @@
+transfer(){ if [ $# -eq 0 ];then echo "No arguments specified.\nUsage:\n  transfer <file|directory>\n  ... | transfer <file_name>">&2;return 1;fi;if tty -s;then file="$1";file_name=$(basename "$file");if [ ! -e "$file" ];then echo "$file: No such file or directory">&2;return 1;fi;if [ -d "$file" ];then file_name="$file_name.zip" ,;(cd "$file"&&zip -r -q - .)|curl --progress-bar --upload-file "-" "http://up.seq.space/$file_name"|tee /dev/null,;;else cat "$file"|curl --progress-bar --upload-file "-" "http://up.seq.space/$file_name"|tee /dev/null;fi;else file_name=$1;curl --progress-bar --upload-file "-" "http://up.seq.space/$file_name"|tee /dev/null;fi;}
+
+otu1	SH1741616.08FU_EF567995_refs	k__Fungi;p__Ascomycota;c__Saccharomycetes;o__Saccharomycetales;f__Saccharomycetales_fam_Incertae_sedis;g__Candida;s__Candida_albicans
+otu4	SH1725250.08FU_KJ706428_reps	k__Fungi;p__Basidiomycota;c__Tremellomycetes;o__Filobasidiales;f__Filobasidiaceae;g__Naganishia;s__Naganishia_diffluens
+
+
+wget ...
+~/usearch_92 -makeudb_sintax utaxref/unite_v7/fasta/refdb.fa -output utaxref/refdb.udb
+
+~/usearch_92 -utax usearch_analysis/otus.fa -db /miniconda3/lotus/its/utaxref/refdb.udb -strand both -fastaout usearch_analysis/otus_tax.fa
+
+~/usearch_92  -sintax usearch_analysis/merged.fq -db utaxref/refdb.udb -tabbedout reads.sintax -strand both -sintax_cutoff 0.8
+
+
+reads/99W_S14_L001_R1_001.fastq              FASTQ   DNA    177,296  44,330,482       45      250      251
+reads/Calb_S13_L001_R1_001.fastq             FASTQ   DNA    125,644  31,497,378       45    250.7      251
+reads/Kitome_S12_L001_R1_001.fastq           FASTQ   DNA        485      67,526       48    139.2      251
+reads/P119L-12-months_S3_L001_R1_001.fastq   FASTQ   DNA     56,516  13,380,125       35    236.7      251
+reads/P139W-12-months_S5_L001_R1_001.fastq   FASTQ   DNA    146,662  36,570,657       35    249.4      251
+reads/P139Y-16-months_S6_L001_R1_001.fastq   FASTQ   DNA    112,804  28,020,687       46    248.4      251
+reads/P143V-12-months_S8_L001_R1_001.fastq   FASTQ   DNA    128,157  31,946,153       47    249.3      251
+reads/P143Y-17-months_S9_L001_R1_001.fastq   FASTQ   DNA    158,885  39,703,879      169    249.9      251
+reads/P168R-12-months_S11_L001_R1_001.fastq  FASTQ   DNA     71,973  17,559,249       46      244      251
+reads/P99O-18-months_S1_L001_R1_001.fastq    FASTQ   DNA     99,771  24,537,633       42    245.9      251
+
+reads/P119P-19-months_S4_L001_R1_001.fastq   FASTQ   DNA         79      19,595       51      248      251
+reads/P168M-6-months_S10_L001_R1_001.fastq   FASTQ   DNA      5,231   1,044,761       48    199.7      251
+reads/P143P-6-months_S7_L001_R1_001.fastq    FASTQ   DNA      5,392     415,379       35       77      251
+reads/P119G-6-months_S2_L001_R1_001.fastq    FASTQ   DNA      2,123     253,288       46    119.3      251
+
+(qiime2-2019.1) ubuntu@swgvl:~/lotus/its$ 
+rm flash_illumina/P119P-19-months_L001_R1_001.fastq.gz flash_illumina/P143P-6-months_L001_R1_001.fastq.gz flash_illumina/P168M-6-months_L001_R1_001.fastq.gz 
+
+For CTTGGTCATTTAGAGGAAGTAA    [found in R1 at the beginning]
+   -TTACTTCCTCTAAATGACCAAG	  [sometimes found in R2 end!]
+Rev GCTGCGTTCTTCATCGATGC	  [found in R2 at the beginning]
+   -GCATCGATGAAGAACGCAGC	  sometimes found in R1 end!]
+
+/a/bit/qi/16S/qiime2/import_directory.sh -n -o q2_pair -i ./reads
+mv Paired.qza demux.qza
+
+qiime cutadapt trim-paired \
+  --i-demultiplexed-sequences demux.qza \
+  --p-adapter-f CTTGGTCATTTAGAGGAAGTAA \
+  --p-front-f AGCCTCCGCTTATTGATATGCTTAART \
+  --p-adapter-r GCTGCGTTCTTCATCGATGC \
+  --p-front-r AGSGATCCRTTGYYRAAAGTT \
+  --o-trimmed-sequences demux-trimmed.qza
+
+cutadapt --error-rate 0.1 --times 1 --cores 4 --overlap 3 -m 25 -a CTTGGTCATTTAGAGGAAGTAA -G GCTGCGTTCTTCATCGATGC \
+ --front ACACCGCCCGTCACTCT -o ciao1 -p ciaos2 P119L-12-months_S3_L001_R1_001.fastq.gz P119L-12-months_S3_L001_R2_001.fastq.gz
+seqkit stats  P119L-12-months* ciao*
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs demux-trimmed.qza \
+  --p-trim-left 13 \
+  --p-trunc-len 160 \
+  --o-representative-sequences dada2-single-end-rep-seqs.qza \
+  --o-table dada2-single-end-table.qza \
+  --o-denoising-stats dada2-single-end-stats.qza
+
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier  \
+  --i-reads dada2-single-end-rep-seqs.qza \
+  --o-classification taxonomy-single-end.qza
+
+qiime taxa barplot \
+  --i-table dada2-single-end-table.qza \
+  --i-taxonomy taxonomy-single-end.qza \
+  --m-metadata-file mock-25-sample-metadata.tsv \
+  --o-visualization taxa-bar-plots.qzv

@@ -12,11 +12,12 @@ use FindBin qw($Bin);
 #~loclib~
 use Proch::N50;
 use Data::Dumper;
+use Data::Printer;
 our %program = (
   'NAME'      => 'FASTX N50',
   'AUTHOR'    => 'Andrea Telatin',
   'MAIL'      => 'andrea@telatin.com',
-  'VERSION'   => '1.9',
+  'VERSION'   => $Proch::N50::VERSION,
 );
 my $hasJSON = undef;
 our $t;
@@ -29,13 +30,12 @@ my $opt_format = 'default';
 my %formats = (
   'default' => 'Prints only N50 for single file, TSV for multiple files',
   'tsv'     => 'Tab separated output (file, seqs, total size, N50, min, max)',
+  'full'    => 'Not implemented',
   'json'    => 'JSON (JavaScript Object Notation) output',
-  'csv'     => 'Alias for tsv and --separator ","',
+  'short'   => 'Not implemented',
+  'csv'     => 'Alias for tsv',
   'custom'  => 'Custom format with --template STRING',
   'screen'  => 'Screen friendly table (requires Text::ASCIITable)',
-
-  'short'   => 'Not implemented',
-  'full'    => 'Not implemented',
  );
 
 my ($opt_help,
@@ -233,7 +233,7 @@ foreach my $file (@ARGV) {
 	say STDERR "[$file]\tTotalSize:$slen;N50:$n50;Sequences:$n" if ($opt_debug);
 
 	$file = basename($file) if ($opt_basename);
-	$file = File::Spec->rel2abs($file) if ($opt_fullpath);
+  $file = File::Spec->rel2abs($file) if ($opt_fullpath);
 
 	my %metrics = (
 		'seqs' => $n,
@@ -475,8 +475,6 @@ total size in bp, and finally N50.
 
 Instead of printing the path of each file, will only print
 the filename, stripping relative or absolute paths to it. See C<-a>.
-Warning: if you are reading multiple files with the same basename, only one will be printed. 
-This is the intended behaviour and you will only receive a warning.
 
 =item I<-a, --abspath>
 
@@ -604,6 +602,10 @@ Tabular (tsv) output is default:
 A custom output format:
 
   n50.pl data/*.fa -f custom -t '{path}{tab}N50={N50};Sum={size}{new}'
+
+=head1 SEE ALSO
+
+This script is written using L<Proch::N50> to calculate N50, that uses L<FASTX::Reader> to parse FASTQ/FASTA files.
 
 =head1 COPYRIGHT
 
