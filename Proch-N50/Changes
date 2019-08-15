@@ -1,7 +1,14 @@
+0.70	2019-08-16
+	* FIXED: 'n50' was producing a pretty printed JSON even without --pretty [since transition to JSON:PP]
+	* Preparing bioconda distribution 
+
+0.60	2019-08-15
+	* MAJOR: Renamed the bundled script from n50.pl to n50
+	* Minor cleanup
+
 0.20	2019-06-30
 	* Simplified test in JSON method (output unchanged)
 	* Changes file cleaned; added a test for wide chars in changelog
-	* Removed Roadmap
 
 0.10	2019-05-30
 	* NEW: added sorting function to n50.pl (useful for 'screen' format)

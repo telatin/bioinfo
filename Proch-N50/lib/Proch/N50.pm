@@ -4,7 +4,7 @@ package Proch::N50;
 use 5.014;
 use warnings;
 
-$Proch::N50::VERSION = '0.20';
+$Proch::N50::VERSION = '0.70';
 
 use JSON::PP;
 use FASTX::Reader;
@@ -145,7 +145,9 @@ Returns N50, min and max lengths.
 
 =over 4
 
-=item L<JSON::PP> (core module, required)
+=item L<FASTX::Reader> (required)
+
+=item L<JSON::PP>, <File::Basename> (core modules)
 
 =back
 
@@ -355,3 +357,4 @@ sub jsonStats {
 
 
 1;
+

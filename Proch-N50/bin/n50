@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # ABSTRACT: A script to calculate N50 from one or multiple FASTA/FASTQ files.
-# PODNAME: n50.pl
+# PODNAME: n50
 
 use 5.014;
 use warnings;
@@ -14,10 +14,10 @@ use FindBin qw($Bin);
 use Proch::N50;
 use Data::Dumper;
 our %program = (
-    'NAME'    => 'SEQUENCE N50',
+    'NAME'    => 'FASTX N50',
     'AUTHOR'  => 'Andrea Telatin',
     'MAIL'    => 'andrea@telatin.com',
-    'VERSION' => '2.0',
+    'VERSION' => '2.07',
 );
 my $hasJSON = undef;
 our $t;
@@ -33,9 +33,8 @@ my %formats       = (
     'csv'     => 'Alias for tsv and --separator ","',
     'custom'  => 'Custom format with --template STRING',
     'screen'  => 'Screen friendly table (requires Text::ASCIITable)',
-
-    'short' => 'Not implemented',
-    'full'  => 'Not implemented',
+    'short'   => 'Not implemented',
+    'full'    => 'Not implemented',
 );
 
 my (
@@ -298,8 +297,12 @@ elsif ( $opt_format eq 'json' ) {
 
     # Print JSON object
     my $json           = JSON->new->allow_nonref;
-    my $pretty_printed = $json->pretty->encode( \%output_object );
-    say $pretty_printed;
+    my $json_printed   = $json->encode( \%output_object );
+
+    if ( $opt_pretty ) {
+       $json_printed = $json->pretty->encode( \%output_object ); 
+    }
+    say $json_printed;
 
 }
 elsif ( $opt_format eq 'tsv' or $opt_format eq 'csv' ) {
@@ -583,10 +586,10 @@ These are the values for C<--format>.
 
 =item I<tsv> (tab separated values)
 
-  #path	seqs 	size	N50	min	max
-  test2.fa	8	 825	189	4	256
-  reads.fa	5	 247	100	6	102
-  small.fa 	6	130	65	4	65
+  #path       seqs  size  N50   min   max
+  test2.fa    8     825   189   4     256
+  reads.fa    5     247   100   6     102
+  small.fa    6     130   65    4     65
 
 =item I<csv> (comma separated values)
 

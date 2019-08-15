@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # ABSTRACT: A script to calculate N50 from one or multiple FASTA/FASTQ files.
-# PODNAME: n50.pl
+# PODNAME: n50
 
 use 5.014;
 use warnings;
@@ -14,10 +14,10 @@ use lib "$Bin/../lib";
 use Proch::N50;
 use Data::Dumper;
 our %program = (
-    'NAME'    => 'SEQUENCE N50',
+    'NAME'    => 'FASTX N50',
     'AUTHOR'  => 'Andrea Telatin',
     'MAIL'    => 'andrea@telatin.com',
-    'VERSION' => '2.0',
+    'VERSION' => '2.01',
 );
 my $hasJSON = undef;
 our $t;

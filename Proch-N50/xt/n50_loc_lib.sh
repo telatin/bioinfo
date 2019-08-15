@@ -4,7 +4,7 @@
 # in ./xt/ but using the local copy of Proch::50 instead of the system installed one
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-SOURCE="$SCRIPTDIR/../bin/n50.pl"
+SOURCE="$SCRIPTDIR/../bin/n50"
 DEST="$SCRIPTDIR/n50.pl"
 
 if [ ! -e "$SOURCE" ]; then
@@ -28,3 +28,7 @@ else
 		echo $DATA;
 	fi
 fi
+
+## Update the README.md file
+VERSION=$(grep VERSION $SCRIPTDIR/../lib/Proch/N50.pm | perl -ne 'if ($_=~/(\d+\.\d+)/) { print "$1" }')
+sed "s/{version}/$VERSION/g" README.template > README.md
