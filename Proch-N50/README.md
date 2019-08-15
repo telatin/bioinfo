@@ -1,6 +1,6 @@
-# Proch::N50 
+# Proch::N50 0.70
 [![CPAN](https://img.shields.io/badge/CPAN-Proch::N50-1abc9c.svg)](https://metacpan.org/pod/Proch::N50)
-[![Kwalitee](https://cpants.cpanauthors.org/release/PROCH/Proch-N50-.svg)](https://cpants.cpanauthors.org/release/PROCH/Proch-N50-)
+[![Kwalitee](https://cpants.cpanauthors.org/release/PROCH/Proch-N50-0.70.svg)](https://cpants.cpanauthors.org/release/PROCH/Proch-N50-0.70)
 [![Version](https://img.shields.io/cpan/v/Proch-N50.svg)](https://metacpan.org/pod/Proch::N50)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/perl-fastx-reader/README.html)
 [![Tests](https://img.shields.io/badge/Tests-Grid-1abc9c.svg)](https://www.cpantesters.org/distro/P/Proch-N50.html)
