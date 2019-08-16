@@ -1,10 +1,18 @@
+0.80	2019-08-16
+	* NEW: Added -q for thousand separator
+	* Now also n50 migrated to JSON::PP, as Proch::N50 did
+	* Prints a short usage if invoked without filenames
+	* Released in 'bioconda'
+	* Warning printed if using --format custom without --template
+	* Added aliases in --template for newline ({n} and \n) and tab ({t} and \t)
+
 0.70	2019-08-16
 	* FIXED: 'n50' was producing a pretty printed JSON even without --pretty [since transition to JSON:PP]
-	* Preparing bioconda distribution 
 
 0.60	2019-08-15
 	* MAJOR: Renamed the bundled script from n50.pl to n50
 	* Minor cleanup
+	* First release available in 'bioconda'
 
 0.20	2019-06-30
 	* Simplified test in JSON method (output unchanged)

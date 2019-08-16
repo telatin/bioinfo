@@ -48,6 +48,7 @@ my (
     $opt_basename,
     $opt_template,
     $opt_fullpath,
+    $opt_thousand_separator,
     $opt_format_screen,    # x: same as -f screen
     $opt_format_json,      # j: same as -f json
     $opt_sort_by,          # o
@@ -67,22 +68,23 @@ my %valid_sort_keys = (
 my $tab    = "\t";
 my $new    = "\n";
 my $result = GetOptions(
-    'a|abspath'     => \$opt_fullpath,
-    'b|basename'    => \$opt_basename,
-    'c|color'       => \$opt_color,
-    'd|debug'       => \$opt_debug,
-    'f|format=s'    => \$opt_format,
-    'h|help'        => \$opt_help,
-    'j|json'        => \$opt_format_json,
-    'n|nonewline'   => \$opt_nonewline,
-    'o|sortby=s'    => \$opt_sort_by,
-    'p|pretty'      => \$opt_pretty,
-    'r|reverse'     => \$opt_reverse_sort,
-    's|separator=s' => \$opt_separator,
-    't|template=s'  => \$opt_template,
-    'u|noheader'    => \$opt_noheader,
-    'v|version'     => \$opt_version,
-    'x|screen'      => \$opt_format_screen,
+    'a|abspath'       => \$opt_fullpath,
+    'b|basename'      => \$opt_basename,
+    'c|color'         => \$opt_color,
+    'd|debug'         => \$opt_debug,
+    'f|format=s'      => \$opt_format,
+    'h|help'          => \$opt_help,
+    'j|json'          => \$opt_format_json,
+    'n|nonewline'     => \$opt_nonewline,
+    'o|sortby=s'      => \$opt_sort_by,
+    'p|pretty'        => \$opt_pretty,
+    'r|reverse'       => \$opt_reverse_sort,
+    's|separator=s'   => \$opt_separator,
+    'q|thousands-sep' => \$opt_thousand_separator,
+    't|template=s'    => \$opt_template,
+    'u|noheader'      => \$opt_noheader,
+    'v|version'       => \$opt_version,
+    'x|screen'        => \$opt_format_screen,
 );
 
 $opt_sort_by = 'N50' if ( $opt_sort_by eq 'n50' );
@@ -118,6 +120,9 @@ if ( $opt_format eq 'list' ) {
     exit;
 }
 
+unless (defined $ARGV[0] or      $opt_version) {
+    say STDERR "Usage: n50 file.fa ... \nType n50 --help for full manual";
+}
 # Shot output formats
 die "Error: Please specify either -x (--screen) or -j (--json)\n"
   if ( $opt_format_screen and $opt_format_json );
@@ -175,12 +180,11 @@ if ( defined $opt_format ) {
     if ( $opt_format eq 'json' ) {
 
         $hasJSON = eval {
-            require JSON;
-            JSON->import();
+            require JSON::PP;
+            JSON::PP->import();
             1;
         };
-        die
-"FATAL ERROR: Please install perl module JSON first [e.g. cpanm JSON]\n"
+        die "FATAL ERROR: Please install perl module JSON::PP first [e.g. cpanm JSON::PP]\n"
           unless ($hasJSON);
     }
 
@@ -206,6 +210,7 @@ if ( defined $opt_format ) {
     }
 
 }
+
 foreach my $file (@ARGV) {
 
     # Check if file exists / check if '-' supplied read STDIN
@@ -259,6 +264,12 @@ foreach my $file (@ARGV) {
         'min'  => $min,
         'max'  => $max,
     );
+
+    if ($opt_thousand_separator) {
+        foreach my $key (keys %metrics) {
+            $metrics{$key} = thousands($metrics{$key});
+        }
+    }
     if (defined $output_object{$file}) {
        print STDERR " WARNING: Overwriting '$file': multiple items with the same filename. Try not using -b/--basename.\n";
     }
@@ -296,7 +307,7 @@ if ( not $opt_format or $opt_format eq 'default' ) {
 elsif ( $opt_format eq 'json' ) {
 
     # Print JSON object
-    my $json           = JSON->new->allow_nonref;
+    my $json           = JSON::PP->new->ascii->allow_nonref;;
     my $json_printed   = $json->encode( \%output_object );
 
     if ( $opt_pretty ) {
@@ -338,8 +349,8 @@ elsif ( $opt_format eq 'custom' ) {
         my $output_string = '';
         $output_string .= $opt_template if ( defined $opt_template );
 
-        $output_string =~ s/{new}/$new/g if ( $output_string =~ /{new}/ );
-        $output_string =~ s/{tab}/$tab/g if ( $output_string =~ /{tab}/ );
+        $output_string =~ s/({new}|{n}|\\n)/$new/g if ( $output_string =~ /({new}|{n}|\\n)/ );
+        $output_string =~ s/({tab}|{n}|\\t)/$tab/g if ( $output_string =~ /({tab}|{t}|\\t)/ );
         $output_string =~ s/{path}/$r/g  if ( $output_string =~ /{path}/ );
         foreach my $f (@fields) {
             $output_string =~ s/{$f}/$output_object{$r}{$f}/g;
@@ -394,11 +405,11 @@ sub printMessage {
 }
 
 sub version {
-   print STDERR '-' x 65, "\n";
+
     printMessage( "$program{NAME}, ver. $program{VERSION}",
         '', 'reset', 'bold green' );
 
-   print STDERR '-' x 65, "\n";
+   print STDERR  '  ','-' x 65, "\n";
 
     printMessage(
         qq(
@@ -406,12 +417,11 @@ sub version {
 
   Program to calculate N50 from multiple FASTA/FASTQ files, 
   based on Proch::N50 $Proch::N50::VERSION
-  https://metacpan.org/pod/distribution/Proch-N50/bin/n50.pl
-
-  Type --help (or -h) to see the full documentation.), '', 'blue', 'green'
+  https://metacpan.org/pod/distribution/Proch-N50/bin/n50
+), '', 'blue', 'green'
     );
 
-   print STDERR '-' x 65, "\n";
+   print STDERR '  ','-' x 65, "\n";
 
     return $program{VERSION};
 }
@@ -428,6 +438,12 @@ sub n50fromHash {
     }
     return 0;
 
+}
+
+sub thousands {
+    my ($number) =  @_;
+    $number =~ s/(\d{1,3}?)(?=(\d{3})+$)/$1,/g;
+    return $number;
 }
 
 # Heng Li's subroutine (edited)
@@ -552,6 +568,11 @@ tab and {N50}, {seqs}, {size}, {path} with sample's N50, number of sequences,
 total size in bp and file path respectively (the latter will
 respect --basename if used).
 
+=item I<-q, --thousands-sep>
+
+Add the thousands separator in all the printed numbers. Enabled by default
+with --format screen (-x).
+
 =item I<-p, --pretty>
 
 If used with 'json' output format, will format the JSON
@@ -602,15 +623,15 @@ Same as C<--format tsv> and C<--separator ,>:
 
 =item I<screen> (screen friendly)
 
-Use C<-x> as shortcut for C<--format screen>.
+Use C<-x> as shortcut for C<--format screen>. Enables --thousands-sep (-q) by default.
 
-  .-----------------------------------------------------------.
-  | File               | Seqs  | Total bp | N50  | min | max  |
-  +--------------------+-------+----------+------+-----+------+
-  | test_fasta_grep.fa |     1 |       80 |   80 |  80 |   80 |
-  | small_test.fa      |     6 |      130 |   65 |   4 |   65 |
-  | rdp_16s_v16.fa     | 13212 | 19098167 | 1467 | 320 | 2210 |
-  '--------------------+-------+----------+------+-----+------'
+  .----------------------------------------------------------------.
+  | File               | Seqs   | Total bp   | N50   | min | max   |
+  +--------------------+--------+------------+-------+-----+-------+
+  | test_fasta_grep.fa |      1 |         80 |    80 |  80 |    80 |
+  | small_test.fa      |      6 |        130 |    65 |   4 |    65 |
+  | rdp_16s_v16.fa     | 13,212 | 19,098,167 | 1,467 | 320 | 2,210 |
+  '--------------------+--------+------------+-------+-----+--------'
 
 =item I<json> (JSON)
 
@@ -632,6 +653,13 @@ Use C<-j> as shortcut for C<--format json>.
        "size" : 19098167
     }
   }
+
+=item I<custom>
+
+Will print the output using the template string provided with -t TEMPLATE.
+Fields are in the C<{field_name}> format. C<{new}>/C<{n}>/C<\n> is the newline, C<{tab}>/C<{t}>/C<\t> is a tab.
+All the keys of the JSON object are valid fields: C<{seqs}>, C<{N50}>, C<{min}>, C<{max}>, C<{size}>.
+
 
 =back
 
