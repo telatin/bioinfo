@@ -11,6 +11,9 @@ use File::Basename;
 use FindBin qw($Bin);
 # The following placeholder is to be programmatically replaced with 'use lib "$Bin/../lib"' if needed
 #~loclib~
+if (-e "$Bin/../lib/Proch/N50.pm" and -e "$Bin/../Changes" ) {
+	use lib "$Bin/../lib";
+}
 use Proch::N50;
 use Data::Dumper;
 our %program = (
@@ -67,7 +70,7 @@ my %valid_sort_keys = (
 );
 my $tab    = "\t";
 my $new    = "\n";
-my $result = GetOptions(
+my $_opt = GetOptions(
     'a|abspath'       => \$opt_fullpath,
     'b|basename'      => \$opt_basename,
     'c|color'         => \$opt_color,
@@ -92,7 +95,6 @@ pod2usage( { -exitval => 0, -verbose => 2 } ) if $opt_help;
 version() if defined $opt_version;
 
 our %output_object;
-
 # Added in v1.5: list accepted output formats programmatically
 # [-f list] or [--format list] will print a list of accepted formats
 
@@ -121,7 +123,8 @@ if ( $opt_format eq 'list' ) {
 }
 
 unless (defined $ARGV[0] or      $opt_version) {
-    say STDERR "Usage: n50 file.fa ... \nType n50 --help for full manual";
+    say STDERR "\n Usage: n50 file.fa ... \n Type n50 --help for full manual";
+    
 }
 # Shot output formats
 die "Error: Please specify either -x (--screen) or -j (--json)\n"
@@ -171,8 +174,7 @@ if ( defined $opt_format ) {
     if ( !$formats{$opt_format} ) {
         my @list = sort keys(%formats);
 
-        die
-" FATAL ERROR:\n Output format not valid (--format '$opt_format').\n Use one of the following: "
+        die " FATAL ERROR:\n Output format not valid (--format '$opt_format').\n Use one of the following: "
           . join( ', ', @list ) . ".\n";
     }
 
@@ -201,6 +203,11 @@ if ( defined $opt_format ) {
             die
               "ERROR:\nFormat 'screen' requires Text::ASCIITable installed.\n";
         }
+    }
+
+    if ( $opt_format eq 'custom' and ! defined $opt_template ) {
+       print STDERR " [WARNING] There is no default template at the moment!\n";
+       print STDERR "           Specify a --template STRING with --format custom or no output will be printed\n";
     }
 
     if ( $formats{$opt_format} eq 'Not implemented' ) {

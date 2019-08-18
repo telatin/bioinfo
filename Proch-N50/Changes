@@ -1,8 +1,7 @@
 0.80	2019-08-16
 	* NEW: Added -q for thousand separator
-	* Now also n50 migrated to JSON::PP, as Proch::N50 did
+	* Now also n50 migrated to JSON::PP, as Proch::N50 does since 0.04
 	* Prints a short usage if invoked without filenames
-	* Released in 'bioconda'
 	* Warning printed if using --format custom without --template
 	* Added aliases in --template for newline ({n} and \n) and tab ({t} and \t)
 
