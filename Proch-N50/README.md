@@ -11,7 +11,7 @@ The updated documentation is in the *[Meta::CPAN page](https://metacpan.org/pod/
 
 The module ships the **n50** program to calculate the N50 of FASTA/FASTQ files ([documentation](https://metacpan.org/pod/distribution/Proch-N50/bin/n50)).
 
-### Installation
+### Installation - perl way
 
 Via CPANminus:
 ```
@@ -21,7 +21,9 @@ curl -L http://cpanmin.us | perl - App::cpanminus
 cpanm Proch::N50
 ```
 
-Via Miniconda:
+### Conda N50
+
+You can install 'n50' to calculate the N50 of a FASTA/FASTQ file with Miniconda, with the command:
 
 ```
 conda install -y -c bioconda n50
