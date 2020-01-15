@@ -72,7 +72,7 @@ sub usage {
 	-x, --maxlen    INT
 	-l, --list      FILE
 	-c, --column    INT (default: 1)
-	-s, --separator CHAR (default: "\t")
+	-s, --separator CHAR (default: "\\t")
 	-h, --header    CHAR (defatul: "#")
 
 	Note that "-p" and "-l" are exclusive
