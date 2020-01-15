@@ -72,15 +72,18 @@ if ($opt_debug) {
 
 for my $id (sort keys %samples) {
     my $file_tag = '';
+    my $abs_file_tag = '';
     if ($opt_single_end) {
         die " FATAL ERROR:\n ID <$id> was used for more than one file\n" if ($samples{$id}{'files'} != 1);
-        $file_tag = $samples{$id}{'R1'};
+        $abs_file_tag = $samples{$id}{'R1'};
+        $file_tag     = basename($samples{$id}{'R1'});
     } else {
         die " FATAL ERROR:\n ID <$id> was used for more than two files\n" if ($samples{$id}{'files'} != 2);
-        $file_tag = $samples{$id}{'R1'} . ',' . $file_tag = $samples{$id}{'R2'};
+        $file_tag = basename($samples{$id}{'R1'}) . ',' . basename($file_tag = $samples{$id}{'R2'});
+        $abs_file_tag     = $samples{$id}{'R1'} . ',' . $file_tag = $samples{$id}{'R2'};
     }
     if ($opt_lotus) {
-        $mapping_file .= "$id\t$file_tag\n";
+        $mapping_file .= "$id\t$file_tag\t$abs_file_tag\n";
     } else {
         $mapping_file .= "$id\tNNNNNNNN\tTreatment\n";
     }
@@ -120,7 +123,7 @@ sub qiime2_header {
 }
 
 sub lotus_header {
-    return "#SampleID\tfastqFile\n";
+    return "#SampleID\tfastqFile\tfastqFilePath\n";
 }
 BEGIN { 
     $R = Term::ANSIColor::color('reset');
