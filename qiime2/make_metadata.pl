@@ -146,19 +146,19 @@ BEGIN {
 __END__
 
  
-=head1 NAME
+=head2 NAME
  
 B<make_metadata.pl> - a script to draft a metadata table for Qiime 2 or Lotus
  
-=head1 AUTHOR
+=head2 AUTHOR
  
 Andrea Telatin <andrea.telatin@quadram.ac.uk>
  
-=head1 SYNOPSIS
+=head2 SYNOPSIS
  
 make_metadata.pl [options] -i INPUT_DIR 
  
-=head1 PARAMETERS
+=head2 PARAMETERS
  
 =over 4
 
@@ -191,11 +191,11 @@ The sample ID is the filename up to the delimiter (default: _)
 
 =back
  
-=head1 BUGS
+=head2 BUGS
  
 Please report them to <andrea@telatin.com>
  
-=head1 COPYRIGHT
+=head2 COPYRIGHT
  
 Copyright (C) 2013-2020 Andrea Telatin 
  

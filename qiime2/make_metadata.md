@@ -1,16 +1,16 @@
-# NAME
+## NAME
 
 **make\_metadata.pl** - a script to draft a metadata table for Qiime 2 or Lotus
 
-# AUTHOR
+## AUTHOR
 
 Andrea Telatin <andrea.telatin@quadram.ac.uk>
 
-# SYNOPSIS
+## SYNOPSIS
 
 make\_metadata.pl \[options\] -i INPUT\_DIR 
 
-# PARAMETERS
+## PARAMETERS
 
 - **-i**, **--reads** DIR
 
@@ -36,11 +36,11 @@ make\_metadata.pl \[options\] -i INPUT\_DIR
 
     The sample ID is the filename up to the delimiter (default: \_)
 
-# BUGS
+## BUGS
 
 Please report them to <andrea@telatin.com>
 
-# COPYRIGHT
+## COPYRIGHT
 
 Copyright (C) 2013-2020 Andrea Telatin 
 
