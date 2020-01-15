@@ -3,10 +3,13 @@
 use 5.012;
 use warnings;
 use Getopt::Long;
+use FindBin qw($RealBin);
+if (-d "$RealBin/lib/FASTX/Reader.pm") {
+	use lib "$RealBin/lib";
+}
 use FASTX::Reader;
 use File::Basename;
 use Data::Dumper;
-
 my $BASENAME = basename($0);
 
 my ($opt_list, $opt_pattern, $opt_maxlen, $opt_minlen, $opt_verbose, $opt_debug);
@@ -77,7 +80,7 @@ sub usage {
 	example:
 	$BASENAME -p 'BamHI' test.fa
 
-	$BASENAME -l list.txt test.fa
+	$BASENAME -l list.txt test.Fasta
 END
 	exit 0;
 }
