@@ -8,7 +8,7 @@ use File::Basename;
 use Data::Dumper;
 use File::Spec;
 use Term::ANSIColor qw(:constants);
-
+use Pod::Usage;
 my ($R, $N);          # Color reset / Reset and newline
 
 my (
@@ -16,6 +16,7 @@ my (
     $opt_single_end,
     $opt_debug,
     $opt_lotus,
+    $opt_help,
 );
 my $opt_for_tag = '_R1\W';
 my $opt_rev_tag = '_R2\W';
@@ -30,7 +31,9 @@ my $_opt = GetOptions(
     'd|id-delim=s'  => \$opt_sample_id_delimiter,
     'l|lotus'       => \$opt_lotus,
     'debug'         => \$opt_debug,
+    'h|help'        => \$opt_help,
 );
+pod2usage({-exitval => 0, -verbose => 2}) if $opt_help;
 
 unless (defined $opt_input_directory) {
     die " FATAL ERROR:\n Please specify input directory (-i DIR, --reads DIR)\n";
@@ -41,6 +44,12 @@ my %samples = ();
 
 for my $file (@files) {
     my $base = basename($file);
+
+    if ($base !~/\.(fastq|fq|fna)/i) {
+        say STDERR " WARNING: File \"$file\" will be ignored: no FASTQ extension detected\n";
+        next;
+    }
+    
     my $abs = File::Spec->rel2abs( $file );
     my ($id) = split /$opt_sample_id_delimiter/, $base;
     die " FATAL ERROR:\n Autoinferred ID <$id> is not valid (file: $file)\n" unless (validate_id($id));
@@ -135,4 +144,75 @@ BEGIN {
 }
 
 __END__
+
+ 
+=head1 NAME
+ 
+B<make_metadata.pl> - a script to draft a metadata table for Qiime 2 or Lotus
+ 
+=head1 AUTHOR
+ 
+Andrea Telatin <andrea.telatin@quadram.ac.uk>
+ 
+=head1 SYNOPSIS
+ 
+make_metadata.pl [options] -i INPUT_DIR 
+ 
+=head1 PARAMETERS
+ 
+=over 4
+
+=item B<-i>, B<--reads> DIR
+
+Path to the directory containing the FASTQ files
+
+=item B<-s>, B<--single-end>
+
+Input directory contains unpaired files (default is Paired-End mode)
+
+=item B<-l>, B<--lotus>
+
+Print metadata in LOTUS format (default: Qiime2)
+
+=item B<-1>, B<--for-tag> STRING
+
+Tag to detect that a file is forward (default: _R1)
+
+
+=item B<-2>, B<--rev-tag> STRING
+
+Tag to detect that a file is forward (default: _R2)
+
+=item B<-d>, B<--delim> STRING
+
+The sample ID is the filename up to the delimiter (default: _)
+
+
+
+=back
+ 
+=head1 BUGS
+ 
+Please report them to <andrea@telatin.com>
+ 
+=head1 COPYRIGHT
+ 
+Copyright (C) 2013-2020 Andrea Telatin 
+ 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+ 
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+=cut
+
+
 
