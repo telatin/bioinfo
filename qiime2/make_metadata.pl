@@ -46,7 +46,7 @@ for my $file (@files) {
     my $base = basename($file);
 
     if ($base !~/\.(fastq|fq|fna)/i) {
-        say STDERR " WARNING: File \"$file\" will be ignored: no FASTQ extension detected\n";
+        say STDERR RED " WARNING: ", RESET, "File \"$file\" will be ignored: no FASTQ extension detected.";
         next;
     }
     
@@ -76,12 +76,15 @@ if ($opt_lotus) {
 }
 
 if ($opt_debug) {
-    say STDERR Dumper \%samples;
+    say STDERR BLUE 'Sample list:', "\n", Dumper \%samples;
+    say RESET '';
 }
 
+my $sample_count = 0;
 for my $id (sort keys %samples) {
     my $file_tag = '';
     my $abs_file_tag = '';
+    $sample_count++;
     if ($opt_single_end) {
         die " FATAL ERROR:\n ID <$id> was used for more than one file\n" if ($samples{$id}{'files'} != 1);
         $abs_file_tag = $samples{$id}{'R1'};
@@ -99,7 +102,12 @@ for my $id (sort keys %samples) {
     
 }
 
-print $mapping_file;
+if ($sample_count) {
+    print $mapping_file;
+} else {
+    print RED "ERROR", RESET, "\n No samples found in <$opt_input_directory>.\n";
+}
+
 sub validate_id($) {
     my %reserved = (
     'id' => 1,
@@ -148,7 +156,11 @@ __END__
  
 =head2 NAME
  
-B<make_metadata.pl> - a script to draft a metadata table for Qiime 2 or Lotus
+B<make_metadata.pl> - a script to draft a metadata table for Qiime 2 or Lotus.
+
+The program will ensure that the proper number of files (1 or 2) is found for
+each sample, and that the sample ID (initial part of the filename) does not 
+contain unsupported chars.
  
 =head2 AUTHOR
  
@@ -188,7 +200,6 @@ Tag to detect that a file is forward (default: _R2)
 The sample ID is the filename up to the delimiter (default: _)
 
 
-
 =back
  
 =head2 BUGS
@@ -210,7 +221,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
  
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program.  If not, see L<http://www.gnu.org/licenses/>.
  
 =cut
 
