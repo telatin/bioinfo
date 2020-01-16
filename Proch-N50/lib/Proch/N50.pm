@@ -4,7 +4,7 @@ package Proch::N50;
 use 5.014;
 use warnings;
 
-$Proch::N50::VERSION = '0.80';
+$Proch::N50::VERSION = '0.90';
 
 use JSON::PP;
 use FASTX::Reader;
@@ -48,7 +48,7 @@ our @EXPORT = qw(getStats getN50 jsonStats);
   # }
   # Directly ask for the JSON object only:
   my $json = jsonStats($filepath);
-  print $json; 
+  print $json;
 
 =head1 METHODS
 
@@ -155,7 +155,7 @@ Returns N50, min and max lengths.
 
 =over 4
 
-=item L<Term::ANSIColor> 
+=item L<Term::ANSIColor>
 
 =back
 
@@ -357,4 +357,3 @@ sub jsonStats {
 
 
 1;
-
