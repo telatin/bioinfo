@@ -8,6 +8,7 @@ if (-d "$RealBin/lib/FASTX/Reader.pm") {
 	use lib "$RealBin/lib";
 }
 use FASTX::Reader;
+
 use File::Basename;
 use Data::Dumper;
 my $BASENAME = basename($0);

@@ -1,0 +1,25 @@
+ - Processing "-"
+ [WARNING] The prefix <seqs_name> contains the separator <_>!
+>seqs_name_1 
+acagcgtacgtgatcgacgtagctagctgacgagctagctacacacgatcgtagctggtagtcagtcgatcgacgtagctagcaacagcgtacgtgatcgacgtagctagctgacgagctagctacacacgatcgtagctggtagtcagtcgatcgacgtagctagca
+ [WARNING] The prefix <seqs_name> contains the separator <_>!
+>seqs_name_2 
+acagcgtacgtgatcgacgtagctagctgacgagctagctacacacgatcgtagctggtagtcagtcgatcgacgtagctagcaacagcgtacgtgatcgacgtagctagctgacgagctagctacacacgatcgtagctggtagtcagtcgatcgacgtagctagcaacagcgtacgtgatcgacgtagctagctgacgagctagctacacacgatcgtagctggtagtcagtcgatcgacgtagctagcaacgt
+ [WARNING] The prefix <seqs_name> contains the separator <_>!
+>seqs_name_3 
+acagcgtacgtgatcgacgtagctagctgacgagctagctacacacgatcgtagctggtagtcagtcgatcgacgtagctagcaacagcgtacgtgatcgacgtagctagctgacgagctagctacacacgatcgtagctggtagtcagtcgatcgacgtagctagca
+ [WARNING] The prefix <seqs_name> contains the separator <_>!
+>seqs_name_4 with comm
+acacacacacacacacacacacacacacacac
+ [WARNING] The prefix <seqs_name> contains the separator <_>!
+>seqs_name_5 
+acagcgtacgtgatcgacgtagctagctgacgagctagctacacacgatcgtagctggtagtcagtcgatcgacgtagctagcaacagcgtacgtgatcgacgtagctagctgacgagctagctacacacgatcgtagctggtagtcagtcgatcgacgtagctagcaccccccccccccccccccccc
+ [WARNING] The prefix <seqs_name> contains the separator <_>!
+>seqs_name_6 
+cccc
+ [WARNING] The prefix <seqs_name> contains the separator <_>!
+>seqs_name_7 
+cccc
+ [WARNING] The prefix <seqs_name> contains the separator <_>!
+>seqs_name_8 
+cccc
