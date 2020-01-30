@@ -1,3 +1,6 @@
+0.91	2020-01-30
+	* Downgrading requisite to perl 5.14
+
 0.90	2020-01-16
 	* FIXED: binary 'n50': Sorting tables did not work with -q (thousands separator)
 	* FIXED: binary 'n50': Quotes added when using -q (thousands separator) and CSV format
