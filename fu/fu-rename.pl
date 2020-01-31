@@ -11,7 +11,7 @@ use FASTX::Reader;
 use File::Basename;
 use Data::Dumper;
 my $BASENAME = basename($0);
-my $warnings++;
+my $warnings = 0;
 my ($opt_verbose, $opt_debug);
 my $opt_separator   = ".";
 my $opt_prefix      = "{b}";
